@@ -4,10 +4,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
 from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import *
 
-from .models import Lista, Item
-from .forms import ListaForm
+from .models import *
+from .forms import *
 
 def home(request):
 
