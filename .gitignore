@@ -19,7 +19,7 @@ venv.bak/
 # Diretórios de mídia e estáticos (geralmente em produção)
 /media/
 /staticfiles/
-/static/
+
 
 # Arquivos de ambiente
 .env
