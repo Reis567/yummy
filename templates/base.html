@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- Título dinâmico -->
+    <title>Yummy | {% block title %}{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        :root {
+            --primary-color:rgb(179, 48, 0);     /* Laranja avermelhado - urgência */
+            --secondary-color:rgb(218, 123, 8);   /* Laranja escuro */
+            --tertiary-color: #FFF5E6;     /* Amarelo dourado */
+            --accent-color: #FF6347;      /* Tomate - fome */
+            --light-color: #FFF5E6;       /* Branco amarelado */
+            --dark-color: #331800;        /* Marrom escuro */
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-color);
+            color: #333;
+        }
+        
+        /* Header Styles */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-brand i {
+            color: var(--tertiary-color);
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 1rem;
+            color: white !important;
+        }
+        
+        .nav-link:hover {
+            color: var(--tertiary-color) !important;
+        }
+        
+        .nav-link i {
+            margin-right: 6px;
+        }
+        
+        /* Active link indicator */
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 3px;
+            background-color: var(--tertiary-color);
+            bottom: 0;
+            left: 20%;
+            border-radius: 5px;
+        }
+        
+        /* Footer Styles */
+        footer {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding-top: 2rem;
+            padding-bottom: 1rem;
+        }
+        
+        footer h5 {
+            color: var(--tertiary-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        footer a.text-white {
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+        }
+        
+        footer a.text-white:hover {
+            color: var(--tertiary-color) !important;
+            transform: translateX(5px);
+        }
+        
+        .social-links a {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 36px;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background-color: var(--tertiary-color);
+            color: var(--dark-color) !important;
+            transform: translateY(-3px);
+        }
+        
+        /* Mobile first adjustments */
+        @media (max-width: 767px) {
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            
+            footer {
+                text-align: center;
+            }
+            
+            .social-links {
+                margin-top: 0.5rem;
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* Task list specific styles */
+        .task-item {
+            background-color: white;
+            border-left: 5px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .task-item.completed {
+            border-left-color: #2ecc71;
+            opacity: 0.8;
+        }
+        
+        .priority-high {
+            border-left-color: #FF4500;
+        }
+        
+        .priority-medium {
+            border-left-color: #FFD700;
+        }
+        
+        .priority-low {
+            border-left-color: #2ecc71;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+    </style>
+    
+    <!-- Bloco para CSS adicional por página -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header Mobile-First -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="{% url 'app_yummy1:home' %}">
+                    <i class="fas fa-utensils me-2"></i>Yummy
+                </a>
+                
+                <!-- Botão Mobile -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <!-- Itens do Menu -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'app_yummy1:home' %}">
+                                <i class="fas fa-home"></i> Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'tasks' %}active{% endif %}" href="#">
+                                <i class="fas fa-tasks"></i> Tarefas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'priority' %}active{% endif %}" href="#">
+                                <i class="fas fa-exclamation-circle"></i> Urgentes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="#">
+                                <i class="fas fa-user"></i> Perfil
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Botão Adicionar Tarefa (visível apenas em telas grandes) -->
+                    <div class="d-none d-lg-block ms-2">
+                        <a href="#" class="btn btn-light btn-sm">
+                            <i class="fas fa-plus me-1"></i> Nova Tarefa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Botão flutuante para adicionar tarefa (visível apenas em dispositivos móveis) -->
+        <div class="d-lg-none">
+            <a href="#" class="btn btn-primary rounded-circle position-fixed" 
+               style="bottom: 20px; right: 20px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <i class="fas fa-plus fa-lg"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="container my-4">
+        {% block content %}
+        <!-- O conteúdo das páginas filhas será inserido aqui -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer Mobile-First -->
+    <footer>
+        <div class="container">
+            <div class="row gy-4">
+                <div class="col-12 col-md-4">
+                    <h5><i class="fas fa-utensils me-2"></i>Yummy</h5>
+                    <p>Organize suas tarefas e afazeres de forma simples e eficiente.</p>
+                </div>
+                
+                <div class="col-6 col-md-4">
+                    <h5>Links Rápidos</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Sobre</a></li>
+                        <li><a href="#" class="text-white">Termos de Uso</a></li>
+                        <li><a href="#" class="text-white">Privacidade</a></li>
+                        <li><a href="#" class="text-white">Contato</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-6 col-md-4">
+                    <h5>Siga-nos</h5>
+                    <div class="social-links">
+                        <a href="#" class="text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-3">
+            
+            <div class="text-center">
+                <p class="mb-0">&copy; {% now "Y" %} Yummy. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap 5 JS Bundle com Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JS Personalizado -->
+    <script src="{% static 'js/script.js' %}"></script>
+    
+    <!-- Bloco para JS adicional por página -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
