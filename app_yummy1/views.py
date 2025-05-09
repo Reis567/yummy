@@ -1134,3 +1134,166 @@ def atualizar_status_concluido_sub_item(request, sub_item_id):
 
 
 ### FIM SUBITENS 
+
+
+
+### INICIO COMENTARIOS 
+
+def listar_comentarios(request, item_id):
+    """
+    Lista todos os comentários de um item específico e retorna em formato JSON
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    # Obtém todos os comentários do item ordenados por data de criação (mais recentes primeiro)
+    comentarios = Comentario.objects.filter(item=item).order_by('-data_criacao')
+    comentarios_lista = []
+    
+    for comentario in comentarios:
+        comentarios_lista.append({
+            'id': comentario.id,
+            'texto': comentario.texto,
+            'usuario': comentario.usuario.username,
+            'data_criacao': comentario.data_criacao.strftime('%d/%m/%Y %H:%M'),
+            'e_meu': comentario.usuario.id == request.user.id,
+        })
+    
+    return JsonResponse({'comentarios': comentarios_lista})
+
+
+@csrf_exempt
+def criar_comentario(request):
+    """
+    Cria um novo comentário a partir dos dados enviados via POST
+    """
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do POST
+            dados = json.loads(request.body)
+            
+            # Verifica se o ID do item foi fornecido
+            if 'item' not in dados:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'ID do item é obrigatório!'
+                }, status=400)
+            
+            # Verifica se o texto foi fornecido
+            if 'texto' not in dados or not dados['texto'].strip():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'O texto do comentário é obrigatório!'
+                }, status=400)
+            
+            # Verifica se o item existe e pertence a uma lista do usuário atual
+            item_id = dados.get('item')
+            item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+            
+            # Cria um novo comentário
+            comentario = Comentario(
+                item=item,
+                usuario=request.user,
+                texto=dados.get('texto').strip()
+            )
+            comentario.save()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Comentário adicionado com sucesso!',
+                'comentario': {
+                    'id': comentario.id,
+                    'texto': comentario.texto,
+                    'usuario': comentario.usuario.username,
+                    'data_criacao': comentario.data_criacao.strftime('%d/%m/%Y %H:%M'),
+                    'e_meu': True,
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para criar um comentário.'
+    }, status=405)
+
+
+@csrf_exempt
+def excluir_comentario(request, comentario_id):
+    """
+    Exclui um comentário existente
+    """
+    # Verifica se o comentário existe e foi criado pelo usuário atual
+    comentario = get_object_or_404(Comentario, id=comentario_id, usuario=request.user)
+    
+    if request.method in ['DELETE', 'POST']:
+        try:
+            # Armazena o ID do comentário antes de excluí-lo
+            comentario_info = {'id': comentario.id}
+            
+            # Exclui o comentário
+            comentario.delete()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Comentário excluído com sucesso!',
+                'comentario_info': comentario_info
+            })
+                
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro ao excluir comentário: {str(e)}'
+            }, status=500)
+    
+    # Se não for uma requisição DELETE ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use DELETE ou POST para excluir um comentário.'
+    }, status=405)
+
+
+### FIM COMENTARIOS 
+
+
+### HISTORICO
+
+def listar_historico(request, item_id):
+    """
+    Lista todo o histórico de um item específico e retorna em formato JSON
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    # Obtém todo o histórico do item ordenado por data (mais recentes primeiro)
+    historicos = Historico.objects.filter(item=item).order_by('-data')
+    historicos_lista = []
+    
+    for historico in historicos:
+        historicos_lista.append({
+            'id': historico.id,
+            'acao': historico.acao,
+            'acao_display': historico.get_acao_display(),
+            'detalhes': historico.detalhes,
+            'usuario': historico.usuario.username,
+            'data': historico.data.strftime('%d/%m/%Y %H:%M'),
+        })
+    
+    return JsonResponse({'historico': historicos_lista})
+
+### FIM HISTORICO
+
+
+
+### CATEGORIAS
+
+
+
+### CATEGORIAS
