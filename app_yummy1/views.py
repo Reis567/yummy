@@ -21,6 +21,7 @@ def home(request):
 
 
 
+### INICIO ITENS 
 
 def listar_listas(request):
     """
@@ -414,3 +415,484 @@ def estatisticas_listas(request):
     }
     
     return JsonResponse(resultado)
+
+
+
+### FIM LISTAS
+
+
+
+### INICIO ITENS 
+
+def listar_itens_da_lista(request, lista_id):
+    """
+    Lista todos os itens de uma lista específica e retorna em formato JSON
+    """
+    # Verifica se a lista existe e pertence ao usuário atual
+    lista = get_object_or_404(Lista, id=lista_id, usuario=request.user)
+    
+    # Obtém todos os itens da lista ordenados
+    itens = Item.objects.filter(lista=lista).order_by('ordem', '-prioridade', 'data_hora')
+    itens_lista = []
+    
+    for item in itens:
+        # Formata a data e hora, se existir
+        data_hora_formatada = None
+        if item.data_hora:
+            data_hora_formatada = item.data_hora.strftime('%d/%m/%Y %H:%M')
+        
+        # Adiciona o item à lista de itens
+        itens_lista.append({
+            'id': item.id,
+            'nome': item.nome,
+            'descricao': item.descricao,
+            'status': item.status,
+            'status_display': item.get_status_display(),
+            'prioridade': item.prioridade,
+            'prioridade_display': item.get_prioridade_display(),
+            'data_hora': data_hora_formatada,
+            'esta_atrasado': item.esta_atrasado(),
+            'tempo_restante': item.tempo_restante(),
+            'ordem': item.ordem,
+            'notas': item.notas,
+        })
+    
+    return JsonResponse({'itens': itens_lista})
+
+
+def obter_item(request, item_id):
+    """
+    Obtém os detalhes de um item específico em formato JSON
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    # Formata a data e hora, se existir
+    data_hora_formatada = None
+    if item.data_hora:
+        data_hora_formatada = item.data_hora.strftime('%d/%m/%Y %H:%M')
+    
+    # Prepara os dados do item
+    item_dict = {
+        'id': item.id,
+        'lista_id': item.lista.id,
+        'lista_nome': item.lista.nome,
+        'nome': item.nome,
+        'descricao': item.descricao,
+        'status': item.status,
+        'status_display': item.get_status_display(),
+        'prioridade': item.prioridade,
+        'prioridade_display': item.get_prioridade_display(),
+        'data_hora': data_hora_formatada,
+        'esta_atrasado': item.esta_atrasado(),
+        'tempo_restante': item.tempo_restante(),
+        'ordem': item.ordem,
+        'notas': item.notas,
+        'data_criacao': item.data_criacao.strftime('%d/%m/%Y %H:%M'),
+        'data_atualizacao': item.data_atualizacao.strftime('%d/%m/%Y %H:%M'),
+    }
+    
+    # Adiciona os sub-itens, se houver
+    sub_itens = SubItem.objects.filter(item=item).order_by('ordem')
+    sub_itens_lista = []
+    
+    for sub_item in sub_itens:
+        sub_itens_lista.append({
+            'id': sub_item.id,
+            'nome': sub_item.nome,
+            'concluido': sub_item.concluido,
+            'ordem': sub_item.ordem,
+        })
+    
+    item_dict['sub_itens'] = sub_itens_lista
+    
+    return JsonResponse({'item': item_dict})
+
+
+@csrf_exempt
+def criar_item(request):
+    """
+    Cria um novo item a partir dos dados enviados via POST
+    """
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do POST
+            dados = json.loads(request.body)
+            
+            # Verifica se a lista existe e pertence ao usuário atual
+            lista_id = dados.get('lista')
+            if not lista_id:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'ID da lista é obrigatório!'
+                }, status=400)
+            
+            lista = get_object_or_404(Lista, id=lista_id, usuario=request.user)
+            
+            # Cria um formulário com os dados recebidos
+            form = ItemForm(dados)
+            
+            if form.is_valid():
+                # Salva o item, mas não comita ainda
+                item = form.save(commit=False)
+                # Define a lista correta
+                item.lista = lista
+                # Salva o item
+                item.save()
+                
+                # Registra no histórico
+                Historico.objects.create(
+                    item=item,
+                    usuario=request.user,
+                    acao='criacao',
+                    detalhes=f'Item criado com status {item.get_status_display()}'
+                )
+                
+                # Verifica se o status da lista precisa ser atualizado
+                verificar_status_lista(lista)
+                
+                # Retorna resposta de sucesso
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Item criado com sucesso!',
+                    'item': {
+                        'id': item.id,
+                        'nome': item.nome,
+                        'status': item.status,
+                        'status_display': item.get_status_display(),
+                        'prioridade': item.prioridade,
+                        'prioridade_display': item.get_prioridade_display(),
+                    }
+                })
+            else:
+                # Retorna erros de validação
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Erro de validação nos dados!',
+                    'errors': form.errors
+                }, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para criar um item.'
+    }, status=405)
+
+
+@csrf_exempt
+def atualizar_item(request, item_id):
+    """
+    Atualiza um item existente a partir dos dados enviados via PUT ou POST
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    if request.method in ['PUT', 'POST']:
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Armazena o status atual antes de atualizar
+            status_anterior = item.status
+            prioridade_anterior = item.prioridade
+            
+            # Verifica se a lista foi alterada e se a nova lista pertence ao usuário
+            nova_lista_id = dados.get('lista')
+            if nova_lista_id and nova_lista_id != item.lista.id:
+                nova_lista = get_object_or_404(Lista, id=nova_lista_id, usuario=request.user)
+                dados['lista'] = nova_lista.id
+            
+            # Cria um formulário com os dados recebidos
+            form = ItemForm(dados, instance=item)
+            
+            if form.is_valid():
+                # Salva as alterações
+                item = form.save()
+                
+                # Registra alterações significativas no histórico
+                detalhes = []
+                
+                if status_anterior != item.status:
+                    detalhes.append(f'Status alterado de {dict(Item.STATUS_CHOICES)[status_anterior]} para {item.get_status_display()}')
+                    Historico.objects.create(
+                        item=item,
+                        usuario=request.user,
+                        acao='mudanca_status',
+                        detalhes=detalhes[-1]
+                    )
+                
+                if prioridade_anterior != item.prioridade:
+                    detalhes.append(f'Prioridade alterada de {dict(Item.PRIORIDADE_CHOICES)[prioridade_anterior]} para {item.get_prioridade_display()}')
+                    Historico.objects.create(
+                        item=item,
+                        usuario=request.user,
+                        acao='mudanca_prioridade',
+                        detalhes=detalhes[-1]
+                    )
+                
+                if detalhes:
+                    Historico.objects.create(
+                        item=item,
+                        usuario=request.user,
+                        acao='atualizacao',
+                        detalhes='; '.join(detalhes)
+                    )
+                
+                # Verifica se o status da lista precisa ser atualizado
+                verificar_status_lista(item.lista)
+                
+                # Retorna resposta de sucesso
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Item atualizado com sucesso!',
+                    'item': {
+                        'id': item.id,
+                        'nome': item.nome,
+                        'status': item.status,
+                        'status_display': item.get_status_display(),
+                        'prioridade': item.prioridade,
+                        'prioridade_display': item.get_prioridade_display(),
+                    }
+                })
+            else:
+                # Retorna erros de validação
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Erro de validação nos dados!',
+                    'errors': form.errors
+                }, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição PUT ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use PUT ou POST para atualizar um item.'
+    }, status=405)
+
+
+@csrf_exempt
+def excluir_item(request, item_id):
+    """
+    Exclui um item existente
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    lista = item.lista  # Guarda a referência da lista antes de excluir o item
+    
+    if request.method in ['DELETE', 'POST']:
+        try:
+            # Armazena o ID e nome do item antes de excluí-lo
+            item_info = {'id': item.id, 'nome': item.nome}
+            
+            # Registra no histórico antes de excluir o item
+            Historico.objects.create(
+                item=item,
+                usuario=request.user,
+                acao='remocao',
+                detalhes=f'Item "{item.nome}" removido'
+            )
+            
+            # Exclui o item
+            item.delete()
+            
+            # Verifica se o status da lista precisa ser atualizado
+            verificar_status_lista(lista)
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Item "{item_info["nome"]}" excluído com sucesso!',
+                'item_info': item_info
+            })
+                
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro ao excluir item: {str(e)}'
+            }, status=500)
+    
+    # Se não for uma requisição DELETE ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use DELETE ou POST para excluir um item.'
+    }, status=405)
+
+
+@csrf_exempt
+def atualizar_status_item(request, item_id):
+    """
+    Atualiza apenas o status de um item existente
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Verifica se o status foi fornecido
+            if 'status' not in dados:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'O status do item é obrigatório!'
+                }, status=400)
+            
+            # Verifica se o status é válido
+            novo_status = dados['status']
+            if novo_status not in [choice[0] for choice in Item.STATUS_CHOICES]:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Status inválido!'
+                }, status=400)
+            
+            # Armazena o status atual
+            status_anterior = item.status
+            
+            # Atualiza o status do item
+            item.status = novo_status
+            item.save()
+            
+            # Registra no histórico
+            if status_anterior != novo_status:
+                Historico.objects.create(
+                    item=item,
+                    usuario=request.user,
+                    acao='mudanca_status',
+                    detalhes=f'Status alterado de {dict(Item.STATUS_CHOICES)[status_anterior]} para {item.get_status_display()}'
+                )
+            
+            # Verifica se o status da lista precisa ser atualizado
+            verificar_status_lista(item.lista)
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Status do item atualizado com sucesso!',
+                'item': {
+                    'id': item.id,
+                    'nome': item.nome,
+                    'status': item.status,
+                    'status_display': item.get_status_display(),
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para atualizar o status do item.'
+    }, status=405)
+
+
+@csrf_exempt
+def atualizar_prioridade_item(request, item_id):
+    """
+    Atualiza apenas a prioridade de um item existente
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Verifica se a prioridade foi fornecida
+            if 'prioridade' not in dados:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'A prioridade do item é obrigatória!'
+                }, status=400)
+            
+            # Verifica se a prioridade é válida
+            nova_prioridade = dados['prioridade']
+            if nova_prioridade not in [choice[0] for choice in Item.PRIORIDADE_CHOICES]:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Prioridade inválida!'
+                }, status=400)
+            
+            # Armazena a prioridade atual
+            prioridade_anterior = item.prioridade
+            
+            # Atualiza a prioridade do item
+            item.prioridade = nova_prioridade
+            item.save()
+            
+            # Registra no histórico
+            if prioridade_anterior != nova_prioridade:
+                Historico.objects.create(
+                    item=item,
+                    usuario=request.user,
+                    acao='mudanca_prioridade',
+                    detalhes=f'Prioridade alterada de {dict(Item.PRIORIDADE_CHOICES)[prioridade_anterior]} para {item.get_prioridade_display()}'
+                )
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Prioridade do item atualizada com sucesso!',
+                'item': {
+                    'id': item.id,
+                    'nome': item.nome,
+                    'prioridade': item.prioridade,
+                    'prioridade_display': item.get_prioridade_display(),
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para atualizar a prioridade do item.'
+    }, status=405)
+
+
+def verificar_status_lista(lista):
+    """
+    Verifica e atualiza o status da lista com base no status de seus itens
+    """
+    # Conta o total de itens e itens concluídos
+    total_itens = lista.itens.count()
+    itens_concluidos = lista.itens.filter(status='concluido').count()
+    
+    # Se não houver itens, não altera o status da lista
+    if total_itens == 0:
+        return
+    
+    # Se todos os itens estiverem concluídos, marca a lista como concluída
+    if total_itens == itens_concluidos:
+        # Só atualiza se o status atual não for 'concluida'
+        if lista.status != 'concluida':
+            lista.status = 'concluida'
+            lista.save()
+    # Se a lista estiver concluída mas nem todos os itens estiverem concluídos, 
+    # volta o status da lista para 'em_andamento'
+    elif lista.status == 'concluida':
+        lista.status = 'em_andamento'
+        lista.save()
+
+
+### FIM ITENS
