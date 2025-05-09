@@ -22,183 +22,13 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{% static 'css/reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     
-    <style>
-        :root {
-            --primary-color:rgb(179, 48, 0);     /* Laranja avermelhado - urgência */
-            --secondary-color:rgb(218, 123, 8);   /* Laranja escuro */
-            --tertiary-color: #FFF5E6;     /* Amarelo dourado */
-            --accent-color: #FF6347;      /* Tomate - fome */
-            --light-color: #FFF5E6;       /* Branco amarelado */
-            --dark-color: #331800;        /* Marrom escuro */
-        }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--light-color);
-            color: #333;
-        }
-        
-        /* Header Styles */
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        
-        .navbar-brand i {
-            color: var(--tertiary-color);
-        }
-        
-        .nav-link {
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-            padding: 0.5rem 1rem;
-            color: white !important;
-        }
-        
-        .nav-link:hover {
-            color: var(--tertiary-color) !important;
-        }
-        
-        .nav-link i {
-            margin-right: 6px;
-        }
-        
-        /* Active link indicator */
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            width: 60%;
-            height: 3px;
-            background-color: var(--tertiary-color);
-            bottom: 0;
-            left: 20%;
-            border-radius: 5px;
-        }
-        
-        /* Footer Styles */
-        footer {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding-top: 2rem;
-            padding-bottom: 1rem;
-        }
-        
-        footer h5 {
-            color: var(--tertiary-color);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        footer a.text-white {
-            transition: all 0.3s ease;
-            display: inline-block;
-            margin-bottom: 0.5rem;
-            text-decoration: none;
-        }
-        
-        footer a.text-white:hover {
-            color: var(--tertiary-color) !important;
-            transform: translateX(5px);
-        }
-        
-        .social-links a {
-            display: inline-block;
-            width: 36px;
-            height: 36px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            text-align: center;
-            line-height: 36px;
-            margin-right: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .social-links a:hover {
-            background-color: var(--tertiary-color);
-            color: var(--dark-color) !important;
-            transform: translateY(-3px);
-        }
-        
-        /* Mobile first adjustments */
-        @media (max-width: 767px) {
-            .navbar-brand {
-                font-size: 1.3rem;
-            }
-            
-            footer {
-                text-align: center;
-            }
-            
-            .social-links {
-                margin-top: 0.5rem;
-                margin-bottom: 1rem;
-            }
-        }
-        
-        /* Task list specific styles */
-        .task-item {
-            background-color: white;
-            border-left: 5px solid var(--primary-color);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .task-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        }
-        
-        .task-item.completed {
-            border-left-color: #2ecc71;
-            opacity: 0.8;
-        }
-        
-        .priority-high {
-            border-left-color: #FF4500;
-        }
-        
-        .priority-medium {
-            border-left-color: #FFD700;
-        }
-        
-        .priority-low {
-            border-left-color: #2ecc71;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .btn-outline-primary {
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-    </style>
+
     
     <!-- Bloco para CSS adicional por página -->
     {% block extra_css %}{% endblock %}
@@ -209,11 +39,11 @@
         <nav class="navbar navbar-expand-lg navbar-dark">
             <div class="container">
                 <a class="navbar-brand" href="{% url 'app_yummy1:home' %}">
-                    <i class="fas fa-utensils me-2"></i>Yummy
+                    <i class="fas fa-shopping-basket me-2"></i>Yummy
                 </a>
                 
                 <!-- Botão Mobile -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 
@@ -226,39 +56,36 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'tasks' %}active{% endif %}" href="#">
-                                <i class="fas fa-tasks"></i> Tarefas
+                            <a class="nav-link {% if request.resolver_match.url_name == 'listas' %}active{% endif %}" href="#">
+                                <i class="fas fa-list-check"></i> Listas
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'priority' %}active{% endif %}" href="#">
-                                <i class="fas fa-exclamation-circle"></i> Urgentes
+                                <i class="fas fa-star"></i> Prioridades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'categories' %}active{% endif %}" href="#">
+                                <i class="fas fa-tags"></i> Categorias
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="#">
-                                <i class="fas fa-user"></i> Perfil
+                                <i class="fas fa-user-circle"></i> Perfil
                             </a>
                         </li>
                     </ul>
                     
-                    <!-- Botão Adicionar Tarefa (visível apenas em telas grandes) -->
-                    <div class="d-none d-lg-block ms-2">
-                        <a href="#" class="btn btn-light btn-sm">
-                            <i class="fas fa-plus me-1"></i> Nova Tarefa
+                    <!-- Botão Adicionar Lista (visível apenas em telas grandes) -->
+                    <div class="d-none d-lg-block ms-3">
+                        <a href="#" class="btn btn-light btn-sm rounded-pill px-3 shadow-sm">
+                            <i class="fas fa-plus me-1"></i> Nova Lista
                         </a>
                     </div>
                 </div>
             </div>
         </nav>
-        
-        <!-- Botão flutuante para adicionar tarefa (visível apenas em dispositivos móveis) -->
-        <div class="d-lg-none">
-            <a href="#" class="btn btn-primary rounded-circle position-fixed" 
-               style="bottom: 20px; right: 20px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                <i class="fas fa-plus fa-lg"></i>
-            </a>
-        </div>
     </header>
 
     <!-- Conteúdo Principal -->
@@ -268,40 +95,60 @@
         {% endblock %}
     </main>
 
+    <!-- Botão flutuante para adicionar lista/item (visível apenas em dispositivos móveis) -->
+    <div class="d-lg-none">
+        <a href="#" class="floating-action-btn">
+            <i class="fas fa-plus fa-lg"></i>
+        </a>
+    </div>
+
     <!-- Footer Mobile-First -->
     <footer>
         <div class="container">
             <div class="row gy-4">
-                <div class="col-12 col-md-4">
-                    <h5><i class="fas fa-utensils me-2"></i>Yummy</h5>
-                    <p>Organize suas tarefas e afazeres de forma simples e eficiente.</p>
+                <div class="col-12 col-md-5">
+                    <h5><i class="fas fa-shopping-basket me-2"></i>Yummy</h5>
+                    <p class="mb-3">Organize suas listas de compras e tarefas do dia a dia de forma simples e eficiente.</p>
+                    <div class="social-links mt-3 mb-4">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
                 </div>
+                
+                <hr class="d-md-none footer-divider">
                 
                 <div class="col-6 col-md-4">
                     <h5>Links Rápidos</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white">Sobre</a></li>
-                        <li><a href="#" class="text-white">Termos de Uso</a></li>
-                        <li><a href="#" class="text-white">Privacidade</a></li>
-                        <li><a href="#" class="text-white">Contato</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Como Usar</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Termos de Uso</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Privacidade</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Contato</a></li>
                     </ul>
                 </div>
                 
-                <div class="col-6 col-md-4">
-                    <h5>Siga-nos</h5>
-                    <div class="social-links">
-                        <a href="#" class="text-white"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
-                    </div>
+                <div class="col-6 col-md-3">
+                    <h5>Recursos</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Blog</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>FAQ</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Suporte</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-angle-right me-2"></i>Novidades</a></li>
+                    </ul>
                 </div>
             </div>
             
-            <hr class="my-3">
+            <hr class="my-4" style="opacity: 0.2;">
             
-            <div class="text-center">
-                <p class="mb-0">&copy; {% now "Y" %} Yummy. Todos os direitos reservados.</p>
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; {% now "Y" %} Yummy. Todos os direitos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+                    <p class="mb-0 text-white-50">Feito com <i class="fas fa-heart text-danger"></i> por Você</p>
+                </div>
             </div>
         </div>
     </footer>
