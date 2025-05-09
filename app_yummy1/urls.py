@@ -30,5 +30,23 @@ urlpatterns = [
     path('api/sub-itens/<int:sub_item_id>/atualizar/', atualizar_sub_item, name='api_atualizar_sub_item'),
     path('api/sub-itens/<int:sub_item_id>/excluir/', excluir_sub_item, name='api_excluir_sub_item'),
     path('api/sub-itens/<int:sub_item_id>/concluido/', atualizar_status_concluido_sub_item, name='api_atualizar_status_concluido_sub_item'),
+
+
+    # API para Comentários
+    path('api/comentarios/<int:item_id>/', listar_comentarios, name='api_listar_comentarios'),
+    path('api/comentarios/criar/', criar_comentario, name='api_criar_comentario'),
+    path('api/comentarios/<int:comentario_id>/excluir/', excluir_comentario, name='api_excluir_comentario'),
+    
+    # API para Histórico
+    path('api/historico/<int:item_id>/', listar_historico, name='api_listar_historico'),
+    
+    # API para Categorias
+    path('api/categorias/', listar_categorias, name='api_listar_categorias'),
+    path('api/categorias/criar/', criar_categoria, name='api_criar_categoria'),
+    path('api/categorias/<int:categoria_id>/atualizar/', atualizar_categoria, name='api_atualizar_categoria'),
+    path('api/categorias/<int:categoria_id>/excluir/', excluir_categoria, name='api_excluir_categoria'),
+    path('api/listas/<int:lista_id>/categorias/', categorizar_lista, name='api_categorizar_lista'),
+    path('api/itens/<int:item_id>/categorias/', categorizar_item, name='api_categorizar_item'),
+
     
 ]
