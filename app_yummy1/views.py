@@ -896,3 +896,241 @@ def verificar_status_lista(lista):
 
 
 ### FIM ITENS
+
+
+
+### INICIO SUBITENS
+
+
+def listar_sub_itens(request, item_id):
+    """
+    Lista todos os sub-itens de um item específico e retorna em formato JSON
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    # Obtém todos os sub-itens do item ordenados
+    sub_itens = SubItem.objects.filter(item=item).order_by('ordem')
+    sub_itens_lista = []
+    
+    for sub_item in sub_itens:
+        sub_itens_lista.append({
+            'id': sub_item.id,
+            'nome': sub_item.nome,
+            'concluido': sub_item.concluido,
+            'ordem': sub_item.ordem,
+        })
+    
+    return JsonResponse({'sub_itens': sub_itens_lista})
+
+
+@csrf_exempt
+def criar_sub_item(request):
+    """
+    Cria um novo sub-item a partir dos dados enviados via POST
+    """
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do POST
+            dados = json.loads(request.body)
+            
+            # Verifica se o ID do item foi fornecido
+            if 'item' not in dados:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'ID do item é obrigatório!'
+                }, status=400)
+            
+            # Verifica se o item existe e pertence a uma lista do usuário atual
+            item_id = dados.get('item')
+            item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+            
+            # Cria um novo sub-item
+            sub_item = SubItem(
+                item=item,
+                nome=dados.get('nome', ''),
+                concluido=dados.get('concluido', False),
+                ordem=dados.get('ordem', 0)
+            )
+            sub_item.save()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Sub-item criado com sucesso!',
+                'sub_item': {
+                    'id': sub_item.id,
+                    'nome': sub_item.nome,
+                    'concluido': sub_item.concluido,
+                    'ordem': sub_item.ordem,
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para criar um sub-item.'
+    }, status=405)
+
+
+@csrf_exempt
+def atualizar_sub_item(request, sub_item_id):
+    """
+    Atualiza um sub-item existente a partir dos dados enviados via PUT ou POST
+    """
+    # Verifica se o sub-item existe e pertence a um item de uma lista do usuário atual
+    sub_item = get_object_or_404(SubItem, id=sub_item_id, item__lista__usuario=request.user)
+    
+    if request.method in ['PUT', 'POST']:
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Atualiza os campos do sub-item
+            if 'nome' in dados:
+                sub_item.nome = dados['nome']
+            if 'concluido' in dados:
+                sub_item.concluido = dados['concluido']
+            if 'ordem' in dados:
+                sub_item.ordem = dados['ordem']
+            
+            # Salva as alterações
+            sub_item.save()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Sub-item atualizado com sucesso!',
+                'sub_item': {
+                    'id': sub_item.id,
+                    'nome': sub_item.nome,
+                    'concluido': sub_item.concluido,
+                    'ordem': sub_item.ordem,
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição PUT ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use PUT ou POST para atualizar um sub-item.'
+    }, status=405)
+
+
+@csrf_exempt
+def excluir_sub_item(request, sub_item_id):
+    """
+    Exclui um sub-item existente
+    """
+    # Verifica se o sub-item existe e pertence a um item de uma lista do usuário atual
+    sub_item = get_object_or_404(SubItem, id=sub_item_id, item__lista__usuario=request.user)
+    
+    if request.method in ['DELETE', 'POST']:
+        try:
+            # Armazena o ID e nome do sub-item antes de excluí-lo
+            sub_item_info = {'id': sub_item.id, 'nome': sub_item.nome}
+            
+            # Exclui o sub-item
+            sub_item.delete()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Sub-item "{sub_item_info["nome"]}" excluído com sucesso!',
+                'sub_item_info': sub_item_info
+            })
+                
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro ao excluir sub-item: {str(e)}'
+            }, status=500)
+    
+    # Se não for uma requisição DELETE ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use DELETE ou POST para excluir um sub-item.'
+    }, status=405)
+
+
+@csrf_exempt
+def atualizar_status_concluido_sub_item(request, sub_item_id):
+    """
+    Atualiza apenas o status 'concluido' de um sub-item existente
+    """
+    # Verifica se o sub-item existe e pertence a um item de uma lista do usuário atual
+    sub_item = get_object_or_404(SubItem, id=sub_item_id, item__lista__usuario=request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Verifica se o status 'concluido' foi fornecido
+            if 'concluido' not in dados:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'O status concluido do sub-item é obrigatório!'
+                }, status=400)
+            
+            # Atualiza o status 'concluido' do sub-item
+            sub_item.concluido = dados['concluido']
+            sub_item.save()
+            
+            # Verifica se todos os sub-itens estão concluídos
+            if sub_item.item.sub_itens.exists():
+                todos_concluidos = all(si.concluido for si in sub_item.item.sub_itens.all())
+                
+                # Se todos os sub-itens estiverem concluídos, marca o item como concluído
+                if todos_concluidos and sub_item.item.status != 'concluido':
+                    sub_item.item.status = 'concluido'
+                    sub_item.item.save()
+                    
+                    # Registra no histórico
+                    Historico.objects.create(
+                        item=sub_item.item,
+                        usuario=request.user,
+                        acao='conclusao',
+                        detalhes='Item concluído automaticamente após conclusão de todos os sub-itens'
+                    )
+                    
+                    # Verifica se o status da lista precisa ser atualizado
+                    verificar_status_lista(sub_item.item.lista)
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Status do sub-item atualizado com sucesso!',
+                'sub_item': {
+                    'id': sub_item.id,
+                    'nome': sub_item.nome,
+                    'concluido': sub_item.concluido,
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para atualizar o status do sub-item.'
+    }, status=405)
+
+
+
+### FIM SUBITENS 
