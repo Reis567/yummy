@@ -23,5 +23,12 @@ urlpatterns = [
     path('api/itens/<int:item_id>/status/', atualizar_status_item, name='api_atualizar_status_item'),
     path('api/itens/<int:item_id>/prioridade/', atualizar_prioridade_item, name='api_atualizar_prioridade_item'),
     path('api/listas/<int:lista_id>/itens/', listar_itens_da_lista, name='api_listar_itens_da_lista'),
+
+
+    path('api/sub-itens/<int:item_id>/', listar_sub_itens, name='api_listar_sub_itens'),
+    path('api/sub-itens/criar/', criar_sub_item, name='api_criar_sub_item'),
+    path('api/sub-itens/<int:sub_item_id>/atualizar/', atualizar_sub_item, name='api_atualizar_sub_item'),
+    path('api/sub-itens/<int:sub_item_id>/excluir/', excluir_sub_item, name='api_excluir_sub_item'),
+    path('api/sub-itens/<int:sub_item_id>/concluido/', atualizar_status_concluido_sub_item, name='api_atualizar_status_concluido_sub_item'),
     
 ]
