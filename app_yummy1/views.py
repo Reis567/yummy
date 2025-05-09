@@ -1294,6 +1294,319 @@ def listar_historico(request, item_id):
 
 ### CATEGORIAS
 
+def listar_categorias(request):
+    """
+    Lista todas as categorias do usuário atual e retorna em formato JSON
+    """
+    # Obtém todas as categorias do usuário atual
+    categorias = Categoria.objects.filter(usuario=request.user).order_by('nome')
+    categorias_lista = []
+    
+    for categoria in categorias:
+        categorias_lista.append({
+            'id': categoria.id,
+            'nome': categoria.nome,
+            'descricao': categoria.descricao,
+            'cor': categoria.cor,
+            'icone': categoria.icone,
+            'total_listas': categoria.listas.count(),
+            'total_itens': categoria.itens.count(),
+        })
+    
+    return JsonResponse({'categorias': categorias_lista})
 
+
+@csrf_exempt
+def criar_categoria(request):
+    """
+    Cria uma nova categoria a partir dos dados enviados via POST
+    """
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do POST
+            dados = json.loads(request.body)
+            
+            # Verifica se o nome foi fornecido
+            if 'nome' not in dados or not dados['nome'].strip():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'O nome da categoria é obrigatório!'
+                }, status=400)
+            
+            # Verifica se já existe uma categoria com o mesmo nome para o usuário
+            nome = dados.get('nome').strip()
+            if Categoria.objects.filter(usuario=request.user, nome=nome).exists():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Já existe uma categoria com esse nome!'
+                }, status=400)
+            
+            # Cria uma nova categoria
+            categoria = Categoria(
+                usuario=request.user,
+                nome=nome,
+                descricao=dados.get('descricao', ''),
+                cor=dados.get('cor', '#007bff'),
+                icone=dados.get('icone', 'fas fa-tag')
+            )
+            categoria.save()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Categoria criada com sucesso!',
+                'categoria': {
+                    'id': categoria.id,
+                    'nome': categoria.nome,
+                    'descricao': categoria.descricao,
+                    'cor': categoria.cor,
+                    'icone': categoria.icone,
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para criar uma categoria.'
+    }, status=405)
+
+
+@csrf_exempt
+def atualizar_categoria(request, categoria_id):
+    """
+    Atualiza uma categoria existente a partir dos dados enviados via PUT ou POST
+    """
+    # Verifica se a categoria existe e pertence ao usuário atual
+    categoria = get_object_or_404(Categoria, id=categoria_id, usuario=request.user)
+    
+    if request.method in ['PUT', 'POST']:
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Verifica se o nome foi fornecido
+            if 'nome' in dados and not dados['nome'].strip():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'O nome da categoria não pode ser vazio!'
+                }, status=400)
+            
+            # Verifica se já existe uma categoria com o mesmo nome para o usuário (excluindo a atual)
+            if 'nome' in dados:
+                nome = dados.get('nome').strip()
+                if Categoria.objects.filter(usuario=request.user, nome=nome).exclude(id=categoria.id).exists():
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Já existe uma categoria com esse nome!'
+                    }, status=400)
+                categoria.nome = nome
+            
+            # Atualiza os demais campos da categoria
+            if 'descricao' in dados:
+                categoria.descricao = dados['descricao']
+            if 'cor' in dados:
+                categoria.cor = dados['cor']
+            if 'icone' in dados:
+                categoria.icone = dados['icone']
+            
+            # Salva as alterações
+            categoria.save()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Categoria atualizada com sucesso!',
+                'categoria': {
+                    'id': categoria.id,
+                    'nome': categoria.nome,
+                    'descricao': categoria.descricao,
+                    'cor': categoria.cor,
+                    'icone': categoria.icone,
+                }
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição PUT ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use PUT ou POST para atualizar uma categoria.'
+    }, status=405)
+
+
+@csrf_exempt
+def excluir_categoria(request, categoria_id):
+    """
+    Exclui uma categoria existente
+    """
+    # Verifica se a categoria existe e pertence ao usuário atual
+    categoria = get_object_or_404(Categoria, id=categoria_id, usuario=request.user)
+    
+    if request.method in ['DELETE', 'POST']:
+        try:
+            # Armazena o ID e nome da categoria antes de excluí-la
+            categoria_info = {'id': categoria.id, 'nome': categoria.nome}
+            
+            # Exclui a categoria
+            categoria.delete()
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Categoria "{categoria_info["nome"]}" excluída com sucesso!',
+                'categoria_info': categoria_info
+            })
+                
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro ao excluir categoria: {str(e)}'
+            }, status=500)
+    
+    # Se não for uma requisição DELETE ou POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use DELETE ou POST para excluir uma categoria.'
+    }, status=405)
+
+
+@csrf_exempt
+def categorizar_lista(request, lista_id):
+    """
+    Associa ou desassocia categorias a uma lista
+    """
+    # Verifica se a lista existe e pertence ao usuário atual
+    lista = get_object_or_404(Lista, id=lista_id, usuario=request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Verifica se as categorias foram fornecidas
+            if 'categorias' not in dados or not isinstance(dados['categorias'], list):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Lista de IDs de categorias é obrigatória!'
+                }, status=400)
+            
+            # Limpa as categorizações atuais
+            CategorizacaoLista.objects.filter(lista=lista).delete()
+            
+            # Adiciona as novas categorias
+            categorias_adicionadas = []
+            for categoria_id in dados['categorias']:
+                try:
+                    # Verifica se a categoria existe e pertence ao usuário atual
+                    categoria = get_object_or_404(Categoria, id=categoria_id, usuario=request.user)
+                    
+                    # Cria a associação
+                    CategorizacaoLista.objects.create(lista=lista, categoria=categoria)
+                    
+                    categorias_adicionadas.append({
+                        'id': categoria.id,
+                        'nome': categoria.nome,
+                    })
+                except:
+                    # Ignora categorias inválidas
+                    pass
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Categorias associadas com sucesso!',
+                'lista': {
+                    'id': lista.id,
+                    'nome': lista.nome,
+                },
+                'categorias': categorias_adicionadas
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para associar categorias.'
+    }, status=405)
+
+
+@csrf_exempt
+def categorizar_item(request, item_id):
+    """
+    Associa ou desassocia categorias a um item
+    """
+    # Verifica se o item existe e pertence a uma lista do usuário atual
+    item = get_object_or_404(Item, id=item_id, lista__usuario=request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Obtém os dados do corpo da requisição
+            dados = json.loads(request.body)
+            
+            # Verifica se as categorias foram fornecidas
+            if 'categorias' not in dados or not isinstance(dados['categorias'], list):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Lista de IDs de categorias é obrigatória!'
+                }, status=400)
+            
+            # Limpa as categorizações atuais
+            CategorizacaoItem.objects.filter(item=item).delete()
+            
+            # Adiciona as novas categorias
+            categorias_adicionadas = []
+            for categoria_id in dados['categorias']:
+                try:
+                    # Verifica se a categoria existe e pertence ao usuário atual
+                    categoria = get_object_or_404(Categoria, id=categoria_id, usuario=request.user)
+                    
+                    # Cria a associação
+                    CategorizacaoItem.objects.create(item=item, categoria=categoria)
+                    
+                    categorias_adicionadas.append({
+                        'id': categoria.id,
+                        'nome': categoria.nome,
+                    })
+                except:
+                    # Ignora categorias inválidas
+                    pass
+            
+            # Retorna resposta de sucesso
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Categorias associadas com sucesso!',
+                'item': {
+                    'id': item.id,
+                    'nome': item.nome,
+                },
+                'categorias': categorias_adicionadas
+            })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Dados inválidos. Verifique o formato JSON.'
+            }, status=400)
+    
+    # Se não for uma requisição POST
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método não permitido. Use POST para associar categorias.'
+    }, status=405)
 
 ### CATEGORIAS
