@@ -1,0 +1,134 @@
+{% extends 'auth/auth_base.html' %}
+{% load static %}
+
+{% block title %}Registro{% endblock %}
+
+{% block auth_content %}
+<div class="auth-content">
+    <div class="auth-form-container">
+        <div class="auth-header text-center mb-4">
+            <h1 class="auth-title">Criar Conta</h1>
+            <p class="auth-subtitle">Junte-se ao Yummy e comece a organizar suas listas!</p>
+        </div>
+        
+        <!-- Formulário de registro -->
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            
+            <!-- Mensagens de erro -->
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <p>Por favor, corrija os erros abaixo:</p>
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Mensagens do sistema -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_first_name" class="form-label">Nome</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        {{ form.first_name }}
+                    </div>
+                    {% if form.first_name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.first_name.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="id_last_name" class="form-label">Sobrenome</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        {{ form.last_name }}
+                    </div>
+                    {% if form.last_name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.last_name.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_username" class="form-label">Nome de usuário</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                    {{ form.username }}
+                </div>
+                {% if form.username.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.username.errors }}
+                    </div>
+                {% endif %}
+                <div class="form-text">Seu nome de usuário deve ser único e conter apenas letras, números e @/./+/-/_.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_email" class="form-label">E-mail</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    {{ form.email }}
+                </div>
+                {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.email.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_password1" class="form-label">Senha</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    {{ form.password1 }}
+                </div>
+                {% if form.password1.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.password1.errors }}
+                    </div>
+                {% endif %}
+                <div class="form-text">Sua senha deve ter pelo menos 8 caracteres e não pode ser muito comum.</div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="id_password2" class="form-label">Confirme a senha</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    {{ form.password2 }}
+                </div>
+                {% if form.password2.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.password2.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                <label class="form-check-label" for="termsCheck">
+                    Concordo com os <a href="#" class="text-decoration-none">Termos de Serviço</a> e <a href="#" class="text-decoration-none">Política de Privacidade</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
+                <i class="fas fa-user-plus me-2"></i>Criar Conta
+            </button>
+            
+            <div class="text-center">
+                <p>Já tem uma conta? <a href="{% url 'app_yummy1:login' %}" class="text-decoration-none">Faça login</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

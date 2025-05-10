@@ -1,6 +1,80 @@
 from django import forms
 from django.utils import timezone
 from .models import Lista, Item, Categoria, SubItem
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+
+class RegisterForm(UserCreationForm):
+    """Formulário personalizado para criação de usuários"""
+    
+    first_name = forms.CharField(
+        max_length=30, 
+        required=False, 
+        label="Nome",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Seu nome'
+        })
+    )
+    
+    last_name = forms.CharField(
+        max_length=30, 
+        required=False, 
+        label="Sobrenome",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Seu sobrenome'
+        })
+    )
+    
+    email = forms.EmailField(
+        max_length=254, 
+        required=True, 
+        label="E-mail",
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'exemplo@email.com'
+        })
+    )
+    
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        label="Nome de usuário",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Escolha um nome de usuário'
+        })
+    )
+    
+    password1 = forms.CharField(
+        label="Senha",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Crie uma senha forte'
+        })
+    )
+    
+    password2 = forms.CharField(
+        label="Confirme a senha",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirme sua senha'
+        })
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+    
+    def clean_email(self):
+        """Valida se o e-mail já está em uso"""
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este e-mail já está em uso. Por favor, use outro.")
+        return email
+
+
 
 
 class ListaForm(forms.ModelForm):
@@ -177,3 +251,75 @@ class ItemImportanteForm(forms.Form):
                 usuario=usuario, 
                 status='em_andamento'
             )
+
+
+
+
+
+
+class UserRegisterForm(UserCreationForm):
+    """
+    Formulário de registro estendido com campos adicionais
+    """
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Email',
+        })
+    )
+    
+    first_name = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nome',
+        })
+    )
+    
+    last_name = forms.CharField(
+        max_length=30,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Sobrenome',
+        })
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+    
+    def __init__(self, *args, **kwargs):
+        super(UserRegisterForm, self).__init__(*args, **kwargs)
+        
+        # Personalizando os widgets dos campos padrão
+        self.fields['username'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Nome de usuário',
+        })
+        
+        self.fields['password1'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Senha',
+        })
+        
+        self.fields['password2'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Confirmar senha',
+        })
+        
+        # Tornando o help_text mais amigável
+        self.fields['username'].help_text = 'Necessário. 150 caracteres ou menos. Letras, números e @/./+/-/_ apenas.'
+        self.fields['password1'].help_text = 'Sua senha deve conter pelo menos 8 caracteres, não pode ser muito comum e não pode ser totalmente numérica.'
+        self.fields['password2'].help_text = 'Digite a mesma senha novamente, para verificação.'
+    
+    def clean_email(self):
+        """
+        Valida se o email já existe no sistema
+        """
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este email já está em uso. Por favor, use outro email.")
+        return email

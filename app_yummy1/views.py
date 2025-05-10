@@ -5,9 +5,93 @@ from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from django.db.models import *
-
+from django.shortcuts import render, redirect
 from .models import *
 from .forms import *
+from django.contrib.auth.forms import AuthenticationForm
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from .forms import *
+
+
+
+### AUTH
+
+@csrf_protect
+def login_view(request):
+    """
+    View para login de usuários
+    """
+    # Redireciona usuários já logados para a home
+    if request.user.is_authenticated:
+        return redirect('app_yummy1:home')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            
+            # Autenticar usuário
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f"Bem-vindo(a) de volta, {username}!")
+                
+                # Redireciona para a página que o usuário tentou acessar ou para a home
+                next_page = request.GET.get('next', 'app_yummy1:home')
+                return redirect(next_page)
+            else:
+                messages.error(request, "Usuário ou senha inválidos.")
+        else:
+            messages.error(request, "Usuário ou senha inválidos.")
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'auth/login.html', {'form': form})
+
+@csrf_protect
+def register_view(request):
+    """
+    View para registro de novos usuários
+    """
+    # Redireciona usuários já logados para a home
+    if request.user.is_authenticated:
+        return redirect('app_yummy1:home')
+    
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Logar o usuário após o cadastro
+            login(request, user)
+            
+            messages.success(request, f"Conta criada com sucesso! Bem-vindo(a), {user.username}!")
+            return redirect('app_yummy1:home')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+    else:
+        form = RegisterForm()
+    
+    return render(request, 'auth/register.html', {'form': form})
+
+def logout_view(request):
+    """
+    View para logout de usuários
+    """
+    logout(request)
+    messages.success(request, "Você saiu com sucesso. Até logo!")
+    return redirect('app_yummy1:login')
+
+
+
+
+
+### END AUTH
 
 def home(request):
     """

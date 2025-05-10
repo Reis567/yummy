@@ -1,10 +1,14 @@
 from django.urls import path
 from .views import *
+
 app_name = 'app_yummy1'
 
 urlpatterns = [
     path('', home, name='home'),
 
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    path('register/', register_view, name='register'),
 
     # API para Listas (CRUD)
     path('api/listas/', listar_listas, name='api_listar_listas'),
