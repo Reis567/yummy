@@ -1,111 +1,376 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Minhas Tarefas{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block extra_css %}
 <style>
-    .task-filter {
+    .dashboard-card {
         background-color: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+        border-top: 4px solid var(--primary-color);
     }
     
-    .task-header {
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    
+    .dashboard-card-body {
+        padding: 1.25rem;
+    }
+    
+    .dashboard-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background-color: var(--tertiary-color);
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: var(--accent-color);
     }
     
-    .task-content {
-        margin-bottom: 5px;
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark-accent);
     }
     
-    .task-meta {
+    .stat-text {
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    
+    .lista-card {
+        background-color: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .lista-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    
+    .lista-card-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--secondary-color);
+        position: relative;
+    }
+    
+    .lista-card-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background-color: var(--primary-color);
+    }
+    
+    .lista-card.em_andamento .lista-card-header::before {
+        background-color: var(--warning-color);
+    }
+    
+    .lista-card.concluida .lista-card-header::before {
+        background-color: var(--success-color);
+    }
+    
+    .lista-card.arquivada .lista-card-header::before {
+        background-color: var(--text-muted);
+    }
+    
+    .lista-card.pausada .lista-card-header::before {
+        background-color: var(--text-dark);
+    }
+    
+    .lista-card-body {
+        padding: 1.25rem;
+        background-color: var(--tertiary-color);
+    }
+    
+    .lista-card-footer {
+        padding: 1rem 1.25rem;
+        background-color: white;
+        border-top: 1px solid var(--secondary-color);
+    }
+    
+    .lista-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
         display: flex;
-        justify-content: space-between;
-        font-size: 0.8rem;
-        color: #777;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        background-color: var(--primary-color);
     }
     
-    .task-actions {
-        margin-top: 10px;
+    .lista-card.em_andamento .lista-icon {
+        background-color: var(--warning-color);
     }
     
-    .task-deadline {
-        color: var(--primary-color);
-        font-weight: 500;
+    .lista-card.concluida .lista-icon {
+        background-color: var(--success-color);
     }
     
-    .badge-priority {
-        padding: 5px 10px;
+    .lista-card.arquivada .lista-icon {
+        background-color: var(--text-muted);
+    }
+    
+    .lista-card.pausada .lista-icon {
+        background-color: var(--text-dark);
+    }
+    
+    .lista-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: var(--text-dark);
+    }
+    
+    .lista-objetivo {
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .lista-meta {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    
+    .lista-item {
+        background-color: white;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--primary-color);
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+    }
+    
+    .lista-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .lista-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .lista-item.alta {
+        border-left-color: var(--error-color);
+    }
+    
+    .lista-item.media {
+        border-left-color: var(--warning-color);
+    }
+    
+    .lista-item.baixa {
+        border-left-color: var(--success-color);
+    }
+    
+    .lista-item.concluido {
+        opacity: 0.7;
+        text-decoration: line-through;
+    }
+    
+    .item-checkbox {
+        margin-right: 0.75rem;
+        width: 18px;
+        height: 18px;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        margin-top: 0.75rem;
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .badge-status {
+        padding: 0.25rem 0.65rem;
         border-radius: 20px;
-        font-size: 0.7rem;
-        font-weight: 500;
+        font-size: 0.75rem;
+        font-weight: 600;
     }
     
-    .badge-high {
-        background-color: #ffebe6;
-        color: #FF4500;
+    .badge-status.em_andamento {
+        background-color: var(--warning-color);
+        color: var(--text-dark);
     }
     
-    .badge-medium {
-        background-color: #fff8e1;
-        color: #FFD700;
+    .badge-status.concluida {
+        background-color: var(--success-color);
+        color: white;
     }
     
-    .badge-low {
-        background-color: #e6f7e6;
-        color: #2ecc71;
+    .badge-status.arquivada {
+        background-color: var(--text-muted);
+        color: white;
+    }
+    
+    .badge-status.pausada {
+        background-color: var(--text-dark);
+        color: white;
+    }
+    
+    .lista-actions {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+    }
+    
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--tertiary-color);
+        color: var(--accent-color);
+        border: none;
+        transition: all 0.2s ease;
+        margin-left: 0.5rem;
+    }
+    
+    .btn-icon:hover {
+        background-color: var(--accent-color);
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h4 {
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+        max-width: 400px;
+        margin: 0 auto 1.5rem;
+    }
+    
+    /* Modal customizado */
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        border-bottom: none;
+    }
+    
+    .modal-title {
+        font-weight: 700;
+    }
+    
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-text {
+        color: var(--text-muted);
+        font-size: 0.85rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-12">
-        <div class="task-header">
-            <h1 class="h2">Minhas Tarefas</h1>
-            <div class="d-none d-md-block">
-                <button class="btn btn-outline-primary me-2">
-                    <i class="fas fa-filter me-1"></i> Filtrar
-                </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i> Nova Tarefa
-                </button>
-            </div>
-        </div>
+<!-- Dashboard Header -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="page-title">Minhas Listas</h2>
+        <p class="text-muted">Bem-vindo(a) de volta, {{ request.user.first_name|default:request.user.username }}! Aqui estão suas listas de tarefas.</p>
+    </div>
+    <div class="col-md-4 text-md-end d-flex justify-content-md-end align-items-center mt-3 mt-md-0">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
+            <i class="fas fa-plus me-1"></i> Nova Lista
+        </button>
     </div>
 </div>
 
+<!-- Dashboard Stats Cards -->
 <div class="row mb-4">
-    <div class="col-12">
-        <div class="task-filter">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <select class="form-select">
-                        <option selected>Todas as prioridades</option>
-                        <option>Alta</option>
-                        <option>Média</option>
-                        <option>Baixa</option>
-                    </select>
+    <div class="col-6 col-md-4 mb-3">
+        <div class="dashboard-card">
+            <div class="dashboard-card-body">
+                <div class="d-flex align-items-center">
+                    <div class="dashboard-icon me-3">
+                        <i class="fas fa-list-check"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">{{ total_listas }}</div>
+                        <div class="stat-text">Listas</div>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <select class="form-select">
-                        <option selected>Todos os status</option>
-                        <option>Pendentes</option>
-                        <option>Em andamento</option>
-                        <option>Concluídas</option>
-                    </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-md-4 mb-3">
+        <div class="dashboard-card">
+            <div class="dashboard-card-body">
+                <div class="d-flex align-items-center">
+                    <div class="dashboard-icon me-3">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">{{ listas_em_andamento }}</div>
+                        <div class="stat-text">Em Andamento</div>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Pesquisar tarefas...">
-                        <button class="btn btn-outline-secondary" type="button">
-                            <i class="fas fa-search"></i>
-                        </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-md-4 mb-3">
+        <div class="dashboard-card">
+            <div class="dashboard-card-body">
+                <div class="d-flex align-items-center">
+                    <div class="dashboard-icon me-3">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">{{ listas_concluidas }}</div>
+                        <div class="stat-text">Concluídas</div>
                     </div>
                 </div>
             </div>
@@ -113,112 +378,314 @@
     </div>
 </div>
 
+<!-- Lista de Listas -->
 <div class="row">
-    <div class="col-md-12">
-        <!-- Lista de Tarefas -->
-        <div class="task-item priority-high">
-            <div class="task-content">
-                <h5>Fazer compras no supermercado</h5>
-                <p>Comprar ingredientes para o jantar de sexta-feira.</p>
-            </div>
-            <div class="task-meta">
-                <span class="task-deadline"><i class="far fa-clock me-1"></i> Hoje, 18:00</span>
-                <span class="badge badge-priority badge-high">Alta Prioridade</span>
-            </div>
-            <div class="task-actions">
-                <button class="btn btn-sm btn-outline-success me-1">
-                    <i class="fas fa-check me-1"></i> Concluir
+    <div class="col-lg-12">
+        {% if listas %}
+            {% for lista in listas %}
+                <div class="lista-card {{ lista.status }}">
+                    <div class="lista-card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="lista-icon me-3">
+                                <i class="{{ lista.icone }}"></i>
+                            </div>
+                            <div>
+                                <h3 class="lista-title">{{ lista.nome }}</h3>
+                                {% if lista.objetivo %}
+                                    <p class="lista-objetivo">{{ lista.objetivo }}</p>
+                                {% endif %}
+                                <div class="lista-meta d-flex align-items-center flex-wrap">
+                                    <span class="me-3">
+                                        <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
+                                    </span>
+                                    {% if lista.data_objetivo %}
+                                        <span class="me-3">
+                                            <i class="fas fa-hourglass-half me-1"></i> 
+                                            {% if lista.dias_restantes < 0 %}
+                                                <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
+                                            {% elif lista.dias_restantes == 0 %}
+                                                <span class="text-warning">Vence hoje</span>
+                                            {% else %}
+                                                <span>{{ lista.dias_restantes }} dias restantes</span>
+                                            {% endif %}
+                                        </span>
+                                    {% endif %}
+                                    <span class="badge badge-status {{ lista.status }}">{{ lista.get_status_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lista-actions d-flex">
+                            <a href="#" class="btn-icon view-lista" data-lista-id="{{ lista.id }}" title="Ver detalhes">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="#" class="btn-icon edit-lista" data-lista-id="{{ lista.id }}" title="Editar lista">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <div class="dropdown d-inline-block">
+                                <button class="btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item add-item" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-plus me-2"></i> Adicionar item</a></li>
+                                    <li><a class="dropdown-item change-status" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-sync-alt me-2"></i> Mudar status</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item delete-lista text-danger" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-trash me-2"></i> Excluir lista</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lista-card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="m-0">Itens</h6>
+                            <span class="text-muted small">{{ lista.itens.count }} total | {{ lista.porcentagem_concluida }}% concluído</span>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: {{ lista.porcentagem_concluida }}%" aria-valuenow="{{ lista.porcentagem_concluida }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        
+                        {% if lista.itens.count > 0 %}
+                            <div class="lista-itens">
+                                {% for item in lista.itens.all|slice:":3" %}
+                                    <div class="lista-item {{ item.prioridade }} {% if item.status == 'concluido' %}concluido{% endif %}">
+                                        <input type="checkbox" class="item-checkbox" {% if item.status == 'concluido' %}checked{% endif %} data-item-id="{{ item.id }}">
+                                        <span>{{ item.nome }}</span>
+                                    </div>
+                                {% endfor %}
+                                
+                                {% if lista.itens.count > 3 %}
+                                    <div class="text-center mt-2">
+                                        <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="{{ lista.id }}">
+                                            Ver todos os {{ lista.itens.count }} itens
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-3">
+                                <p class="text-muted mb-2">Esta lista ainda não tem itens.</p>
+                                <button class="btn btn-sm btn-outline-primary add-item" data-lista-id="{{ lista.id }}">
+                                    <i class="fas fa-plus me-1"></i> Adicionar Item
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="lista-card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex">
+                                {% if lista.itens.filter.prioridade == 'alta' %}
+                                    <span class="me-2" title="Itens de prioridade alta">
+                                        <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens.filter.prioridade == 'alta'|length }}
+                                    </span>
+                                {% endif %}
+                                {% if lista.itens.filter.prioridade == 'media' %}
+                                    <span class="me-2" title="Itens de prioridade média">
+                                        <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens.filter.prioridade == 'media'|length }}
+                                    </span>
+                                {% endif %}
+                                {% if lista.itens.filter.prioridade == 'baixa' %}
+                                    <span title="Itens de prioridade baixa">
+                                        <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens.filter.prioridade == 'baixa'|length }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <a href="#" class="btn btn-sm btn-primary view-lista" data-lista-id="{{ lista.id }}">
+                                <i class="fas fa-eye me-1"></i> Ver Lista
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h4>Nenhuma lista encontrada</h4>
+                <p>Você ainda não criou nenhuma lista de tarefas. Comece criando sua primeira lista para organizar suas atividades.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
+                    <i class="fas fa-plus me-1"></i> Criar Minha Primeira Lista
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-1">
-                    <i class="fas fa-edit me-1"></i> Editar
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-trash me-1"></i> Excluir
-                </button>
             </div>
-        </div>
-        
-        <div class="task-item priority-medium">
-            <div class="task-content">
-                <h5>Agendar consulta médica</h5>
-                <p>Marcar consulta de rotina no Dr. Santos.</p>
-            </div>
-            <div class="task-meta">
-                <span class="task-deadline"><i class="far fa-clock me-1"></i> Amanhã, 12:00</span>
-                <span class="badge badge-priority badge-medium">Média Prioridade</span>
-            </div>
-            <div class="task-actions">
-                <button class="btn btn-sm btn-outline-success me-1">
-                    <i class="fas fa-check me-1"></i> Concluir
-                </button>
-                <button class="btn btn-sm btn-outline-secondary me-1">
-                    <i class="fas fa-edit me-1"></i> Editar
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-trash me-1"></i> Excluir
-                </button>
-            </div>
-        </div>
-        
-        <div class="task-item priority-low">
-            <div class="task-content">
-                <h5>Revisar apresentação</h5>
-                <p>Fazer a revisão final da apresentação para a reunião de segunda-feira.</p>
-            </div>
-            <div class="task-meta">
-                <span class="task-deadline"><i class="far fa-clock me-1"></i> 3 dias, 15:00</span>
-                <span class="badge badge-priority badge-low">Baixa Prioridade</span>
-            </div>
-            <div class="task-actions">
-                <button class="btn btn-sm btn-outline-success me-1">
-                    <i class="fas fa-check me-1"></i> Concluir
-                </button>
-                <button class="btn btn-sm btn-outline-secondary me-1">
-                    <i class="fas fa-edit me-1"></i> Editar
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-trash me-1"></i> Excluir
-                </button>
-            </div>
-        </div>
-        
-        <div class="task-item completed">
-            <div class="task-content">
-                <h5><del>Pagar conta de luz</del></h5>
-                <p><del>Pagar a conta de luz deste mês.</del></p>
-            </div>
-            <div class="task-meta">
-                <span class="task-deadline"><i class="fas fa-check-circle me-1"></i> Concluída</span>
-                <span class="badge badge-priority badge-high">Alta Prioridade</span>
-            </div>
-            <div class="task-actions">
-                <button class="btn btn-sm btn-outline-warning me-1">
-                    <i class="fas fa-undo me-1"></i> Desfazer
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-trash me-1"></i> Excluir
-                </button>
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- Incluir o modal para criação de lista -->
+{% include "home/includes/modal_nova_lista.html" %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // JavaScript para funcionalidade específica da página de tarefas
+    // Inicialização da página
     $(document).ready(function() {
-        // Exemplo: Marcar tarefa como concluída
-        $('.btn-outline-success').click(function() {
-            $(this).closest('.task-item').addClass('completed');
-            // Aqui você adicionaria o código para enviar esta ação ao backend
+        // Handler para o formulário de nova lista
+        $('#formNovaLista').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Obter dados do formulário
+            const formData = {
+                nome: $('#id_nome').val(),
+                objetivo: $('#id_objetivo').val(),
+                data_objetivo: $('#id_data_objetivo').val(),
+                status: $('#id_status').val(),
+                cor: $('#id_cor').val(),
+                icone: $('#id_icone').val()
+            };
+            
+            // Enviar para a API
+            $.ajax({
+                url: '/api/listas/criar/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                },
+                success: function(response) {
+                    // Fechar o modal
+                    $('#modalNovaLista').modal('hide');
+                    
+                    // Exibir mensagem de sucesso
+                    showMessage('success', 'Lista criada com sucesso!');
+                    
+                    // Recarregar a página para mostrar a nova lista
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    // Exibir mensagem de erro
+                    const response = xhr.responseJSON;
+                    showMessage('danger', response.message || 'Erro ao criar lista. Tente novamente.');
+                    
+                    // Exibir erros de validação no formulário
+                    if (response.errors) {
+                        showFormErrors(response.errors);
+                    }
+                }
+            });
         });
         
-        // Exemplo: Desfazer conclusão de tarefa
-        $('.btn-outline-warning').click(function() {
-            $(this).closest('.task-item').removeClass('completed');
-            // Aqui você adicionaria o código para enviar esta ação ao backend
+        // Marcar/desmarcar item como concluído
+        $('.item-checkbox').on('change', function() {
+            const itemId = $(this).data('item-id');
+            const concluido = $(this).prop('checked');
+            const novoStatus = concluido ? 'concluido' : 'pendente';
+            
+            // Atualizar a classe do item
+            if (concluido) {
+                $(this).closest('.lista-item').addClass('concluido');
+            } else {
+                $(this).closest('.lista-item').removeClass('concluido');
+            }
+            
+            // Enviar para a API
+            $.ajax({
+                url: `/api/itens/${itemId}/status/`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ status: novoStatus }),
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                },
+                success: function(response) {
+                    showMessage('success', 'Status do item atualizado!');
+                },
+                error: function() {
+                    showMessage('danger', 'Erro ao atualizar status do item.');
+                    // Reverter a mudança no checkbox
+                    $('.item-checkbox[data-item-id="'+itemId+'"]').prop('checked', !concluido);
+                }
+            });
         });
+        
+        // Adicionar item à lista
+        $('.add-item').on('click', function(e) {
+            e.preventDefault();
+            const listaId = $(this).data('lista-id');
+            // Redirecionar para a página da lista ou abrir modal de novo item
+            alert('Funcionalidade para adicionar item à lista ' + listaId + ' será implementada em breve!');
+        });
+        
+        // Ver lista completa
+        $('.view-lista').on('click', function(e) {
+            e.preventDefault();
+            const listaId = $(this).data('lista-id');
+            // Redirecionar para a página da lista
+            window.location.href = `/listas/${listaId}/`;
+        });
+        
+        // Editar lista
+        $('.edit-lista').on('click', function(e) {
+            e.preventDefault();
+            const listaId = $(this).data('lista-id');
+            // Abrir modal de edição ou redirecionar
+            alert('Funcionalidade para editar a lista ' + listaId + ' será implementada em breve!');
+        });
+        
+        // Excluir lista
+        $('.delete-lista').on('click', function(e) {
+            e.preventDefault();
+            const listaId = $(this).data('lista-id');
+            
+            if (confirm('Tem certeza que deseja excluir esta lista? Esta ação não pode ser desfeita.')) {
+                $.ajax({
+                    url: `/api/listas/${listaId}/excluir/`,
+                    type: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                    },
+                    success: function(response) {
+                        showMessage('success', 'Lista excluída com sucesso!');
+                        // Remover a lista da interface
+                        $(`[data-lista-id="${listaId}"]`).closest('.lista-card').fadeOut(300, function() {
+                            $(this).remove();
+                            
+                            // Se não houver mais listas, mostrar o estado vazio
+                            if ($('.lista-card').length === 0) {
+                                location.reload();
+                            }
+                        });
+                    },
+                    error: function() {
+                        showMessage('danger', 'Erro ao excluir lista. Tente novamente.');
+                    }
+                });
+            }
+        });
+        
+        // Função auxiliar para exibir mensagens
+        function showMessage(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                </div>
+            `;
+            
+            // Inserir alerta no topo da página
+            $('.page-title').before(alertHtml);
+            
+            // Auto-remover após 5 segundos
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+        
+        // Função para exibir erros de formulário
+        function showFormErrors(errors) {
+            // Limpar erros anteriores
+            $('.invalid-feedback').remove();
+            $('.is-invalid').removeClass('is-invalid');
+            
+            // Adicionar novas mensagens de erro
+            for (const field in errors) {
+                const input = $(`#id_${field}`);
+                input.addClass('is-invalid');
+                input.after(`<div class="invalid-feedback">${errors[field]}</div>`);
+            }
+        }
     });
 </script>
 {% endblock %}

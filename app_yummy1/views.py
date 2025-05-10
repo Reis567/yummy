@@ -10,10 +10,26 @@ from .models import *
 from .forms import *
 
 def home(request):
-
+    """
+    Página inicial que mostra as listas do usuário
+    """
+    # Obtém todas as listas do usuário atual
+    listas = Lista.objects.filter(usuario=request.user).order_by('-data_criacao')
+    
+    # Cria um formulário para nova lista
+    form_lista = ListaForm()
+    
+    # Cria contexto para o template
     context = {
         'page_title': 'Home',
+        'listas': listas,
+        'form_lista': form_lista,
+        # Adiciona estatísticas básicas
+        'total_listas': listas.count(),
+        'listas_concluidas': listas.filter(status='concluida').count(),
+        'listas_em_andamento': listas.filter(status='em_andamento').count(),
     }
+    
     return render(request, 'home/home.html', context)
 
 
