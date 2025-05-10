@@ -1,42 +1,73 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Home{% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Estilos Base Mobile-First */
+    :root {
+        --card-padding: 1rem;
+        --card-border-radius: 10px;
+        --icon-size-small: 36px;
+        --icon-size-medium: 42px;
+        --text-size-small: 0.85rem;
+        --text-size-xs: 0.75rem;
+    }
+    
+    /* Em telas maiores, aumentamos alguns tamanhos */
+    @media (min-width: 768px) {
+        :root {
+            --card-padding: 1.25rem;
+            --card-border-radius: 12px;
+            --icon-size-small: 40px;
+            --icon-size-medium: 48px;
+        }
+    }
+    
+    /* Dashboard Cards */
     .dashboard-card {
         background-color: white;
-        border-radius: 12px;
-        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+        border-radius: var(--card-border-radius);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         height: 100%;
         border-top: 4px solid var(--primary-color);
+        margin-bottom: 1rem;
     }
     
     .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     }
     
     .dashboard-card-body {
-        padding: 1.25rem;
+        padding: var(--card-padding);
     }
     
     .dashboard-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: var(--icon-size-small);
+        height: var(--icon-size-small);
+        border-radius: 10px;
         background-color: var(--tertiary-color);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
+        font-size: 1.1rem;
         color: var(--accent-color);
     }
     
+    @media (min-width: 768px) {
+        .dashboard-icon {
+            width: var(--icon-size-medium);
+            height: var(--icon-size-medium);
+            font-size: 1.4rem;
+        }
+    }
+    
     .stat-number {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--dark-accent);
     }
@@ -44,25 +75,33 @@
     .stat-text {
         color: var(--text-muted);
         font-weight: 600;
+        font-size: var(--text-size-small);
     }
     
+    @media (min-width: 768px) {
+        .stat-number {
+            font-size: 2rem;
+        }
+    }
+    
+    /* Lista Cards */
     .lista-card {
         background-color: white;
-        border-radius: 12px;
+        border-radius: var(--card-border-radius);
         overflow: hidden;
-        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.25rem;
         transition: all 0.3s ease;
         position: relative;
     }
     
     .lista-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     }
     
     .lista-card-header {
-        padding: 1.25rem;
+        padding: var(--card-padding);
         border-bottom: 1px solid var(--secondary-color);
         position: relative;
     }
@@ -73,8 +112,14 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
+        height: 3px;
         background-color: var(--primary-color);
+    }
+    
+    @media (min-width: 768px) {
+        .lista-card-header::before {
+            height: 4px;
+        }
     }
     
     .lista-card.em_andamento .lista-card-header::before {
@@ -94,26 +139,35 @@
     }
     
     .lista-card-body {
-        padding: 1.25rem;
+        padding: var(--card-padding);
         background-color: var(--tertiary-color);
     }
     
     .lista-card-footer {
-        padding: 1rem 1.25rem;
+        padding: 0.75rem var(--card-padding);
         background-color: white;
         border-top: 1px solid var(--secondary-color);
     }
     
     .lista-icon {
-        width: 48px;
-        height: 48px;
+        width: var(--icon-size-small);
+        height: var(--icon-size-small);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        font-size: 1rem;
         color: white;
         background-color: var(--primary-color);
+        flex-shrink: 0;
+    }
+    
+    @media (min-width: 768px) {
+        .lista-icon {
+            width: var(--icon-size-medium);
+            height: var(--icon-size-medium);
+            font-size: 1.2rem;
+        }
     }
     
     .lista-card.em_andamento .lista-icon {
@@ -133,16 +187,22 @@
     }
     
     .lista-title {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
         font-weight: 700;
         margin-bottom: 0.25rem;
         color: var(--text-dark);
     }
     
+    @media (min-width: 768px) {
+        .lista-title {
+            font-size: 1.25rem;
+        }
+    }
+    
     .lista-objetivo {
         color: var(--text-muted);
         margin-bottom: 0.5rem;
-        font-size: 0.9rem;
+        font-size: var(--text-size-small);
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -150,18 +210,28 @@
     }
     
     .lista-meta {
-        font-size: 0.85rem;
+        font-size: var(--text-size-xs);
         color: var(--text-muted);
         margin-bottom: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
     
+    @media (min-width: 768px) {
+        .lista-meta {
+            font-size: var(--text-size-small);
+        }
+    }
+    
+    /* Lista Items */
     .lista-item {
         background-color: white;
-        border-radius: 8px;
+        border-radius: 6px;
         padding: 0.75rem;
         margin-bottom: 0.75rem;
         border-left: 3px solid var(--primary-color);
-        font-size: 0.9rem;
+        font-size: var(--text-size-small);
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
@@ -195,22 +265,47 @@
     
     .item-checkbox {
         margin-right: 0.75rem;
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
     }
     
+    @media (min-width: 768px) {
+        .item-checkbox {
+            width: 18px;
+            height: 18px;
+        }
+    }
+    
+    /* Progress Bar */
     .progress {
-        height: 8px;
-        border-radius: 4px;
-        margin-top: 0.75rem;
+        height: 6px;
+        border-radius: 3px;
+        margin-top: 0.5rem;
         background-color: rgba(255, 255, 255, 0.5);
     }
     
+    @media (min-width: 768px) {
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 0.75rem;
+        }
+    }
+    
+    /* Badge Status */
     .badge-status {
-        padding: 0.25rem 0.65rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: var(--text-size-xs);
         font-weight: 600;
+    }
+    
+    @media (min-width: 768px) {
+        .badge-status {
+            padding: 0.25rem 0.65rem;
+            font-size: 0.75rem;
+        }
     }
     
     .badge-status.em_andamento {
@@ -233,15 +328,24 @@
         color: white;
     }
     
+    /* Action Buttons */
     .lista-actions {
         position: absolute;
-        top: 1.25rem;
-        right: 1.25rem;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+    }
+    
+    @media (min-width: 768px) {
+        .lista-actions {
+            top: 1.25rem;
+            right: 1.25rem;
+        }
     }
     
     .btn-icon {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -251,6 +355,15 @@
         border: none;
         transition: all 0.2s ease;
         margin-left: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    @media (min-width: 768px) {
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
     }
     
     .btn-icon:hover {
@@ -259,68 +372,172 @@
         transform: translateY(-3px);
     }
     
+    /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 3rem 1rem;
+        padding: 2rem 1rem;
         background-color: white;
-        border-radius: 12px;
-        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+        border-radius: var(--card-border-radius);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    @media (min-width: 768px) {
+        .empty-state {
+            padding: 3rem 1rem;
+        }
     }
     
     .empty-state i {
-        font-size: 4rem;
+        font-size: 3rem;
         color: var(--secondary-color);
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
     }
     
     .empty-state h4 {
         color: var(--text-dark);
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
     }
     
     .empty-state p {
         color: var(--text-muted);
         max-width: 400px;
-        margin: 0 auto 1.5rem;
+        margin: 0 auto 1.25rem;
+        font-size: var(--text-size-small);
     }
     
-    /* Modal customizado */
+    /* Modal Customizado */
     .modal-header {
         background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
         color: white;
         border-bottom: none;
+        padding: 1rem 1.25rem;
     }
     
     .modal-title {
         font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .modal-title {
+            font-size: 1.25rem;
+        }
+    }
+    
+    .modal-body {
+        padding: 1.25rem;
     }
     
     .modal-footer {
         border-top: none;
-        padding: 1rem 1.5rem 1.5rem;
+        padding: 0.75rem 1.25rem 1.25rem;
+    }
+    
+    @media (min-width: 768px) {
+        .modal-footer {
+            padding: 1rem 1.5rem 1.5rem;
+        }
     }
     
     .form-label {
         font-weight: 600;
         color: var(--text-dark);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
+        font-size: var(--text-size-small);
+    }
+    
+    @media (min-width: 768px) {
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
     }
     
     .form-text {
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: var(--text-size-xs);
+    }
+    
+    @media (min-width: 768px) {
+        .form-text {
+            font-size: var(--text-size-small);
+        }
+    }
+    
+    /* Ajustes para o cabeçalho da página */
+    .page-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    @media (min-width: 768px) {
+        .page-title {
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+    }
+    
+    /* Ajustes para gutter (espaçamento entre colunas) */
+    .row {
+        --bs-gutter-x: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .row {
+            --bs-gutter-x: 1.5rem;
+        }
+    }
+    
+    /* Ajustes para espaçamentos verticais */
+    .mb-4 {
+        margin-bottom: 1.25rem !important;
+    }
+    
+    @media (min-width: 768px) {
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+    }
+    
+    /* Otimizações para botões em dispositivos móveis */
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    @media (min-width: 768px) {
+        .btn {
+            font-size: 0.9375rem;
+            padding: 0.4375rem 0.875rem;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.65rem;
+            font-size: 0.8125rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Dashboard Header -->
-<div class="row mb-4">
-    <div class="col-md-8">
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8 mb-3 mb-md-0">
         <h2 class="page-title">Minhas Listas</h2>
         <p class="text-muted">Bem-vindo(a) de volta, {{ request.user.first_name|default:request.user.username }}! Aqui estão suas listas de tarefas.</p>
     </div>
-    <div class="col-md-4 text-md-end d-flex justify-content-md-end align-items-center mt-3 mt-md-0">
+    <div class="col-12 col-md-4 d-flex justify-content-start justify-content-md-end">
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
             <i class="fas fa-plus me-1"></i> Nova Lista
         </button>
@@ -329,11 +546,11 @@
 
 <!-- Dashboard Stats Cards -->
 <div class="row mb-4">
-    <div class="col-6 col-md-4 mb-3">
+    <div class="col-6 col-md-4 mb-3 mb-md-0">
         <div class="dashboard-card">
             <div class="dashboard-card-body">
                 <div class="d-flex align-items-center">
-                    <div class="dashboard-icon me-3">
+                    <div class="dashboard-icon me-2 me-md-3">
                         <i class="fas fa-list-check"></i>
                     </div>
                     <div>
@@ -345,11 +562,11 @@
         </div>
     </div>
     
-    <div class="col-6 col-md-4 mb-3">
+    <div class="col-6 col-md-4 mb-3 mb-md-0">
         <div class="dashboard-card">
             <div class="dashboard-card-body">
                 <div class="d-flex align-items-center">
-                    <div class="dashboard-icon me-3">
+                    <div class="dashboard-icon me-2 me-md-3">
                         <i class="fas fa-spinner"></i>
                     </div>
                     <div>
@@ -361,11 +578,11 @@
         </div>
     </div>
     
-    <div class="col-6 col-md-4 mb-3">
+    <div class="col-12 col-md-4">
         <div class="dashboard-card">
             <div class="dashboard-card-body">
                 <div class="d-flex align-items-center">
-                    <div class="dashboard-icon me-3">
+                    <div class="dashboard-icon me-2 me-md-3">
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div>
@@ -380,26 +597,26 @@
 
 <!-- Lista de Listas -->
 <div class="row">
-    <div class="col-lg-12">
+    <div class="col-12">
         {% if listas %}
             {% for lista in listas %}
                 <div class="lista-card {{ lista.status }}">
                     <div class="lista-card-header">
-                        <div class="d-flex align-items-center">
-                            <div class="lista-icon me-3">
+                        <div class="d-flex">
+                            <div class="lista-icon me-2 me-md-3">
                                 <i class="{{ lista.icone }}"></i>
                             </div>
-                            <div>
+                            <div class="pe-5"> <!-- Adicionado padding-right para evitar sobreposição com os botões -->
                                 <h3 class="lista-title">{{ lista.nome }}</h3>
                                 {% if lista.objetivo %}
                                     <p class="lista-objetivo">{{ lista.objetivo }}</p>
                                 {% endif %}
-                                <div class="lista-meta d-flex align-items-center flex-wrap">
-                                    <span class="me-3">
+                                <div class="lista-meta">
+                                    <span>
                                         <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
                                     </span>
                                     {% if lista.data_objetivo %}
-                                        <span class="me-3">
+                                        <span>
                                             <i class="fas fa-hourglass-half me-1"></i> 
                                             {% if lista.dias_restantes < 0 %}
                                                 <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
@@ -414,7 +631,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="lista-actions d-flex">
+                        <div class="lista-actions">
                             <a href="#" class="btn-icon view-lista" data-lista-id="{{ lista.id }}" title="Ver detalhes">
                                 <i class="fas fa-eye"></i>
                             </a>
@@ -449,7 +666,7 @@
                                 {% for item in lista.itens.all|slice:":3" %}
                                     <div class="lista-item {{ item.prioridade }} {% if item.status == 'concluido' %}concluido{% endif %}">
                                         <input type="checkbox" class="item-checkbox" {% if item.status == 'concluido' %}checked{% endif %} data-item-id="{{ item.id }}">
-                                        <span>{{ item.nome }}</span>
+                                        <span class="text-truncate">{{ item.nome }}</span>
                                     </div>
                                 {% endfor %}
                                 
@@ -473,20 +690,25 @@
                     
                     <div class="lista-card-footer">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex">
-                                {% if lista.itens.filter.prioridade == 'alta' %}
-                                    <span class="me-2" title="Itens de prioridade alta">
-                                        <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens.filter.prioridade == 'alta'|length }}
+                            <div class="d-flex flex-wrap gap-2">
+                                <!-- Itens de prioridade alta -->
+                                {% if lista.itens_alta_prioridade > 0 %}
+                                    <span title="Itens de prioridade alta">
+                                        <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens_alta_prioridade }}
                                     </span>
                                 {% endif %}
-                                {% if lista.itens.filter.prioridade == 'media' %}
-                                    <span class="me-2" title="Itens de prioridade média">
-                                        <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens.filter.prioridade == 'media'|length }}
+                                
+                                <!-- Itens de prioridade média -->
+                                {% if lista.itens_media_prioridade > 0 %}
+                                    <span title="Itens de prioridade média">
+                                        <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens_media_prioridade }}
                                     </span>
                                 {% endif %}
-                                {% if lista.itens.filter.prioridade == 'baixa' %}
+                                
+                                <!-- Itens de prioridade baixa -->
+                                {% if lista.itens_baixa_prioridade > 0 %}
                                     <span title="Itens de prioridade baixa">
-                                        <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens.filter.prioridade == 'baixa'|length }}
+                                        <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens_baixa_prioridade }}
                                     </span>
                                 {% endif %}
                             </div>
@@ -503,7 +725,7 @@
                 <h4>Nenhuma lista encontrada</h4>
                 <p>Você ainda não criou nenhuma lista de tarefas. Comece criando sua primeira lista para organizar suas atividades.</p>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
-                    <i class="fas fa-plus me-1"></i> Criar Minha Primeira Lista
+                    <i class="fas fa-plus "></i>
                 </button>
             </div>
         {% endif %}
@@ -511,7 +733,7 @@
 </div>
 
 <!-- Incluir o modal para criação de lista -->
-{% include "home/includes/modal_nova_lista.html" %}
+{% include "modal/modal_nova_lista.html" %}
 
 {% endblock %}
 
@@ -592,7 +814,8 @@
                 success: function(response) {
                     showMessage('success', 'Status do item atualizado!');
                 },
-                error: function() {
+
+error: function() {
                     showMessage('danger', 'Erro ao atualizar status do item.');
                     // Reverter a mudança no checkbox
                     $('.item-checkbox[data-item-id="'+itemId+'"]').prop('checked', !concluido);
@@ -686,6 +909,50 @@
                 input.after(`<div class="invalid-feedback">${errors[field]}</div>`);
             }
         }
+        
+        // Ajuste para melhorar a experiência em dispositivos móveis
+        function adjustForMobile() {
+            // Se a largura da tela for menor que 576px (dispositivos muito pequenos)
+            if (window.innerWidth < 576) {
+                // Reduzir o número de itens mostrados em cada lista
+                $('.lista-item').each(function(index) {
+                    if (index > 1) { // Mostrar apenas os 2 primeiros itens em telas muito pequenas
+                        $(this).hide();
+                    }
+                });
+                
+                // Mostrar o botão "Ver todos" para listas com mais de 2 itens
+                $('.lista-itens').each(function() {
+                    const items = $(this).find('.lista-item');
+                    if (items.length > 2) {
+                        // Se o botão "Ver todos" já não existir, adicione-o
+                        if ($(this).find('.btn-view-all').length === 0) {
+                            const listaId = $(this).closest('.lista-card').find('[data-lista-id]').first().data('lista-id');
+                            const totalItems = items.length;
+                            $(this).append(`
+                                <div class="text-center mt-2">
+                                    <a href="#" class="btn btn-sm btn-outline-primary view-lista btn-view-all" data-lista-id="${listaId}">
+                                        Ver todos os ${totalItems} itens
+                                    </a>
+                                </div>
+                            `);
+                        }
+                    }
+                });
+            } else {
+                // Em telas maiores, mostrar até 3 itens conforme o design original
+                $('.lista-item').show();
+                $('.btn-view-all').parent().remove();
+            }
+        }
+        
+        // Executar o ajuste na inicialização
+        adjustForMobile();
+        
+        // Executar o ajuste quando a tela for redimensionada
+        $(window).on('resize', function() {
+            adjustForMobile();
+        });
     });
 </script>
 {% endblock %}

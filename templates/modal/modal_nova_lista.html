@@ -1,0 +1,129 @@
+<!-- Modal para Criação de Nova Lista -->
+<div class="modal fade" id="modalNovaLista" tabindex="-1" aria-labelledby="modalNovaListaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovaListaLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Nova Lista
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formNovaLista" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="id_nome" class="form-label">Nome da Lista*</label>
+                        <input type="text" class="form-control" id="id_nome" name="nome" placeholder="Ex: Lista de Compras" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_objetivo" class="form-label">Objetivo</label>
+                        <textarea class="form-control" id="id_objetivo" name="objetivo" rows="2" placeholder="Descreva o objetivo desta lista"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_data_objetivo" class="form-label">Data para conclusão</label>
+                        <input type="date" class="form-control" id="id_data_objetivo" name="data_objetivo">
+                        <div class="form-text">Opcional: data limite para concluir esta lista</div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="id_status" class="form-label">Status</label>
+                            <select class="form-select" id="id_status" name="status">
+                                <option value="em_andamento" selected>Em andamento</option>
+                                <option value="concluida">Concluída</option>
+                                <option value="pausada">Pausada</option>
+                                <option value="arquivada">Arquivada</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-6">
+                            <label for="id_cor" class="form-label">Cor da Lista</label>
+                            <input type="color" class="form-control form-control-color w-100" id="id_cor" name="cor" value="#F9A27B">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_icone" class="form-label">Ícone</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i id="iconPreview" class="fas fa-shopping-basket"></i></span>
+                            <select class="form-select" id="id_icone" name="icone">
+                                <option value="fas fa-shopping-basket" selected>Cesta de Compras</option>
+                                <option value="fas fa-utensils">Utensílios</option>
+                                <option value="fas fa-tasks">Tarefas</option>
+                                <option value="fas fa-briefcase">Trabalho</option>
+                                <option value="fas fa-home">Casa</option>
+                                <option value="fas fa-graduation-cap">Estudos</option>
+                                <option value="fas fa-heart">Saúde</option>
+                                <option value="fas fa-users">Família</option>
+                                <option value="fas fa-dumbbell">Exercícios</option>
+                                <option value="fas fa-plane">Viagens</option>
+                                <option value="fas fa-gift">Presentes</option>
+                                <option value="fas fa-book">Livros</option>
+                                <option value="fas fa-film">Filmes</option>
+                                <option value="fas fa-gamepad">Jogos</option>
+                                <option value="fas fa-car">Transporte</option>
+                                <option value="fas fa-money-bill-wave">Finanças</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex flex-column flex-sm-row w-100">
+                        <button type="button" class="btn btn-outline-secondary mb-2 mb-sm-0 me-sm-2 order-2 order-sm-1" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary mb-2 mb-sm-0 order-1 order-sm-2 flex-fill">
+                            <i class="fas fa-save me-1"></i> Salvar Lista
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Script para preview do ícone ao selecionar
+    document.addEventListener('DOMContentLoaded', function() {
+        const iconeSelect = document.getElementById('id_icone');
+        const iconPreview = document.getElementById('iconPreview');
+        
+        if (iconeSelect && iconPreview) {
+            iconeSelect.addEventListener('change', function() {
+                // Remove todas as classes de ícone
+                iconPreview.className = '';
+                // Adiciona a classe selecionada
+                iconPreview.className = this.value;
+            });
+        }
+        
+        // Ajustar modal em dispositivos móveis
+        const adjustModalForMobile = function() {
+            const modalBody = document.querySelector('#modalNovaLista .modal-body');
+            if (window.innerWidth < 576 && modalBody) {
+                // Reduzir padding em dispositivos móveis
+                modalBody.style.padding = '1rem';
+                
+                // Reduzir número de linhas do textarea
+                const textarea = document.getElementById('id_objetivo');
+                if (textarea) {
+                    textarea.rows = 2;
+                }
+            }
+        };
+        
+        // Executar ajuste quando o modal for aberto
+        $('#modalNovaLista').on('shown.bs.modal', function () {
+            adjustModalForMobile();
+        });
+        
+        // Também ajustar quando a janela for redimensionada
+        window.addEventListener('resize', adjustModalForMobile);
+    });
+</script>
