@@ -1,958 +1,423 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
-
 {% block title %}Home{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Estilos Base Mobile-First */
-    :root {
-        --card-padding: 1rem;
-        --card-border-radius: 10px;
-        --icon-size-small: 36px;
-        --icon-size-medium: 42px;
-        --text-size-small: 0.85rem;
-        --text-size-xs: 0.75rem;
-    }
-    
-    /* Em telas maiores, aumentamos alguns tamanhos */
-    @media (min-width: 768px) {
-        :root {
-            --card-padding: 1.25rem;
-            --card-border-radius: 12px;
-            --icon-size-small: 40px;
-            --icon-size-medium: 48px;
-        }
-    }
-    
-    /* Dashboard Cards */
-    .dashboard-card {
-        background-color: white;
-        border-radius: var(--card-border-radius);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        height: 100%;
-        border-top: 4px solid var(--primary-color);
-        margin-bottom: 1rem;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-    
-    .dashboard-card-body {
-        padding: var(--card-padding);
-    }
-    
-    .dashboard-icon {
-        width: var(--icon-size-small);
-        height: var(--icon-size-small);
-        border-radius: 10px;
-        background-color: var(--tertiary-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        color: var(--accent-color);
-    }
-    
-    @media (min-width: 768px) {
-        .dashboard-icon {
-            width: var(--icon-size-medium);
-            height: var(--icon-size-medium);
-            font-size: 1.4rem;
-        }
-    }
-    
-    .stat-number {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--dark-accent);
-    }
-    
-    .stat-text {
-        color: var(--text-muted);
-        font-weight: 600;
-        font-size: var(--text-size-small);
-    }
-    
-    @media (min-width: 768px) {
-        .stat-number {
-            font-size: 2rem;
-        }
-    }
-    
-    /* Lista Cards */
-    .lista-card {
-        background-color: white;
-        border-radius: var(--card-border-radius);
-        overflow: hidden;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.25rem;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    
-    .lista-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-    
-    .lista-card-header {
-        padding: var(--card-padding);
-        border-bottom: 1px solid var(--secondary-color);
-        position: relative;
-    }
-    
-    .lista-card-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background-color: var(--primary-color);
-    }
-    
-    @media (min-width: 768px) {
-        .lista-card-header::before {
-            height: 4px;
-        }
-    }
-    
-    .lista-card.em_andamento .lista-card-header::before {
-        background-color: var(--warning-color);
-    }
-    
-    .lista-card.concluida .lista-card-header::before {
-        background-color: var(--success-color);
-    }
-    
-    .lista-card.arquivada .lista-card-header::before {
-        background-color: var(--text-muted);
-    }
-    
-    .lista-card.pausada .lista-card-header::before {
-        background-color: var(--text-dark);
-    }
-    
-    .lista-card-body {
-        padding: var(--card-padding);
-        background-color: var(--tertiary-color);
-    }
-    
-    .lista-card-footer {
-        padding: 0.75rem var(--card-padding);
-        background-color: white;
-        border-top: 1px solid var(--secondary-color);
-    }
-    
-    .lista-icon {
-        width: var(--icon-size-small);
-        height: var(--icon-size-small);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        color: white;
-        background-color: var(--primary-color);
-        flex-shrink: 0;
-    }
-    
-    @media (min-width: 768px) {
-        .lista-icon {
-            width: var(--icon-size-medium);
-            height: var(--icon-size-medium);
-            font-size: 1.2rem;
-        }
-    }
-    
-    .lista-card.em_andamento .lista-icon {
-        background-color: var(--warning-color);
-    }
-    
-    .lista-card.concluida .lista-icon {
-        background-color: var(--success-color);
-    }
-    
-    .lista-card.arquivada .lista-icon {
-        background-color: var(--text-muted);
-    }
-    
-    .lista-card.pausada .lista-icon {
-        background-color: var(--text-dark);
-    }
-    
-    .lista-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-        color: var(--text-dark);
-    }
-    
-    @media (min-width: 768px) {
-        .lista-title {
-            font-size: 1.25rem;
-        }
-    }
-    
-    .lista-objetivo {
-        color: var(--text-muted);
-        margin-bottom: 0.5rem;
-        font-size: var(--text-size-small);
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    .lista-meta {
-        font-size: var(--text-size-xs);
-        color: var(--text-muted);
-        margin-bottom: 0.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    
-    @media (min-width: 768px) {
-        .lista-meta {
-            font-size: var(--text-size-small);
-        }
-    }
-    
-    /* Lista Items */
-    .lista-item {
-        background-color: white;
-        border-radius: 6px;
-        padding: 0.75rem;
-        margin-bottom: 0.75rem;
-        border-left: 3px solid var(--primary-color);
-        font-size: var(--text-size-small);
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-    }
-    
-    .lista-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-    }
-    
-    .lista-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .lista-item.alta {
-        border-left-color: var(--error-color);
-    }
-    
-    .lista-item.media {
-        border-left-color: var(--warning-color);
-    }
-    
-    .lista-item.baixa {
-        border-left-color: var(--success-color);
-    }
-    
-    .lista-item.concluido {
-        opacity: 0.7;
-        text-decoration: line-through;
-    }
-    
-    .item-checkbox {
-        margin-right: 0.75rem;
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-    }
-    
-    @media (min-width: 768px) {
-        .item-checkbox {
-            width: 18px;
-            height: 18px;
-        }
-    }
-    
-    /* Progress Bar */
-    .progress {
-        height: 6px;
-        border-radius: 3px;
-        margin-top: 0.5rem;
-        background-color: rgba(255, 255, 255, 0.5);
-    }
-    
-    @media (min-width: 768px) {
-        .progress {
-            height: 8px;
-            border-radius: 4px;
-            margin-top: 0.75rem;
-        }
-    }
-    
-    /* Badge Status */
-    .badge-status {
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-size: var(--text-size-xs);
-        font-weight: 600;
-    }
-    
-    @media (min-width: 768px) {
-        .badge-status {
-            padding: 0.25rem 0.65rem;
-            font-size: 0.75rem;
-        }
-    }
-    
-    .badge-status.em_andamento {
-        background-color: var(--warning-color);
-        color: var(--text-dark);
-    }
-    
-    .badge-status.concluida {
-        background-color: var(--success-color);
-        color: white;
-    }
-    
-    .badge-status.arquivada {
-        background-color: var(--text-muted);
-        color: white;
-    }
-    
-    .badge-status.pausada {
-        background-color: var(--text-dark);
-        color: white;
-    }
-    
-    /* Action Buttons */
-    .lista-actions {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        display: flex;
-    }
-    
-    @media (min-width: 768px) {
-        .lista-actions {
-            top: 1.25rem;
-            right: 1.25rem;
-        }
-    }
-    
-    .btn-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: var(--tertiary-color);
-        color: var(--accent-color);
-        border: none;
-        transition: all 0.2s ease;
-        margin-left: 0.5rem;
-        font-size: 0.9rem;
-    }
-    
-    @media (min-width: 768px) {
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            font-size: 1rem;
-        }
-    }
-    
-    .btn-icon:hover {
-        background-color: var(--accent-color);
-        color: white;
-        transform: translateY(-3px);
-    }
-    
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 2rem 1rem;
-        background-color: white;
-        border-radius: var(--card-border-radius);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-    }
-    
-    @media (min-width: 768px) {
-        .empty-state {
-            padding: 3rem 1rem;
-        }
-    }
-    
-    .empty-state i {
-        font-size: 3rem;
-        color: var(--secondary-color);
-        margin-bottom: 1rem;
-    }
-    
-    @media (min-width: 768px) {
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-        }
-    }
-    
-    .empty-state h4 {
-        color: var(--text-dark);
-        margin-bottom: 0.75rem;
-    }
-    
-    .empty-state p {
-        color: var(--text-muted);
-        max-width: 400px;
-        margin: 0 auto 1.25rem;
-        font-size: var(--text-size-small);
-    }
-    
-    /* Modal Customizado */
-    .modal-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        color: white;
-        border-bottom: none;
-        padding: 1rem 1.25rem;
-    }
-    
-    .modal-title {
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-    
-    @media (min-width: 768px) {
-        .modal-title {
-            font-size: 1.25rem;
-        }
-    }
-    
-    .modal-body {
-        padding: 1.25rem;
-    }
-    
-    .modal-footer {
-        border-top: none;
-        padding: 0.75rem 1.25rem 1.25rem;
-    }
-    
-    @media (min-width: 768px) {
-        .modal-footer {
-            padding: 1rem 1.5rem 1.5rem;
-        }
-    }
-    
-    .form-label {
-        font-weight: 600;
-        color: var(--text-dark);
-        margin-bottom: 0.4rem;
-        font-size: var(--text-size-small);
-    }
-    
-    @media (min-width: 768px) {
-        .form-label {
-            margin-bottom: 0.5rem;
-        }
-    }
-    
-    .form-text {
-        color: var(--text-muted);
-        font-size: var(--text-size-xs);
-    }
-    
-    @media (min-width: 768px) {
-        .form-text {
-            font-size: var(--text-size-small);
-        }
-    }
-    
-    /* Ajustes para o cabeçalho da página */
-    .page-title {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    @media (min-width: 768px) {
-        .page-title {
-            font-size: 1.75rem;
-            margin-bottom: 0.75rem;
-        }
-    }
-    
-    /* Ajustes para gutter (espaçamento entre colunas) */
-    .row {
-        --bs-gutter-x: 1rem;
-    }
-    
-    @media (min-width: 768px) {
-        .row {
-            --bs-gutter-x: 1.5rem;
-        }
-    }
-    
-    /* Ajustes para espaçamentos verticais */
-    .mb-4 {
-        margin-bottom: 1.25rem !important;
-    }
-    
-    @media (min-width: 768px) {
-        .mb-4 {
-            margin-bottom: 1.5rem !important;
-        }
-    }
-    
-    /* Otimizações para botões em dispositivos móveis */
-    .btn {
-        font-size: 0.875rem;
-        padding: 0.375rem 0.75rem;
-    }
-    
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-    }
-    
-    @media (min-width: 768px) {
-        .btn {
-            font-size: 0.9375rem;
-            padding: 0.4375rem 0.875rem;
-        }
-        
-        .btn-sm {
-            padding: 0.25rem 0.65rem;
-            font-size: 0.8125rem;
-        }
-    }
-</style>
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
-
 {% block content %}
 <!-- Dashboard Header -->
 <div class="row mb-4 align-items-center">
-    <div class="col-12 col-md-8 mb-3 mb-md-0">
-        <h2 class="page-title">Minhas Listas</h2>
-        <p class="text-muted">Bem-vindo(a) de volta, {{ request.user.first_name|default:request.user.username }}! Aqui estão suas listas de tarefas.</p>
-    </div>
-    <div class="col-12 col-md-4 d-flex justify-content-start justify-content-md-end">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
-            <i class="fas fa-plus me-1"></i> Nova Lista
-        </button>
-    </div>
+   <div class="col-12 col-md-8 mb-3 mb-md-0">
+      <h2 class="page-title">Minhas Listas</h2>
+      <p class="text-muted">Bem-vindo(a) de volta, {{ request.user.first_name|default:request.user.username }}! Aqui estão suas listas de tarefas.</p>
+   </div>
+   <div class="col-12 col-md-4 d-flex justify-content-start justify-content-md-end">
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
+      <i class="fas fa-plus me-1"></i> Nova Lista
+      </button>
+   </div>
 </div>
-
 <!-- Dashboard Stats Cards -->
 <div class="row mb-4">
-    <div class="col-6 col-md-4 mb-3 mb-md-0">
-        <div class="dashboard-card">
-            <div class="dashboard-card-body">
-                <div class="d-flex align-items-center">
-                    <div class="dashboard-icon me-2 me-md-3">
-                        <i class="fas fa-list-check"></i>
-                    </div>
-                    <div>
-                        <div class="stat-number">{{ total_listas }}</div>
-                        <div class="stat-text">Listas</div>
-                    </div>
-                </div>
+   <div class="col-6 col-md-4 mb-3 mb-md-0">
+      <div class="dashboard-card">
+         <div class="dashboard-card-body">
+            <div class="d-flex align-items-center">
+               <div class="dashboard-icon me-2 me-md-3">
+                  <i class="fas fa-list-check"></i>
+               </div>
+               <div>
+                  <div class="stat-number">{{ total_listas }}</div>
+                  <div class="stat-text">Listas</div>
+               </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-6 col-md-4 mb-3 mb-md-0">
-        <div class="dashboard-card">
-            <div class="dashboard-card-body">
-                <div class="d-flex align-items-center">
-                    <div class="dashboard-icon me-2 me-md-3">
-                        <i class="fas fa-spinner"></i>
-                    </div>
-                    <div>
-                        <div class="stat-number">{{ listas_em_andamento }}</div>
-                        <div class="stat-text">Em Andamento</div>
-                    </div>
-                </div>
+         </div>
+      </div>
+   </div>
+   <div class="col-6 col-md-4 mb-3 mb-md-0">
+      <div class="dashboard-card">
+         <div class="dashboard-card-body">
+            <div class="d-flex align-items-center">
+               <div class="dashboard-icon me-2 me-md-3">
+                  <i class="fas fa-spinner"></i>
+               </div>
+               <div>
+                  <div class="stat-number">{{ listas_em_andamento }}</div>
+                  <div class="stat-text">Em Andamento</div>
+               </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-12 col-md-4">
-        <div class="dashboard-card">
-            <div class="dashboard-card-body">
-                <div class="d-flex align-items-center">
-                    <div class="dashboard-icon me-2 me-md-3">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div>
-                        <div class="stat-number">{{ listas_concluidas }}</div>
-                        <div class="stat-text">Concluídas</div>
-                    </div>
-                </div>
+         </div>
+      </div>
+   </div>
+   <div class="col-12 col-md-4">
+      <div class="dashboard-card">
+         <div class="dashboard-card-body">
+            <div class="d-flex align-items-center">
+               <div class="dashboard-icon me-2 me-md-3">
+                  <i class="fas fa-check-circle"></i>
+               </div>
+               <div>
+                  <div class="stat-number">{{ listas_concluidas }}</div>
+                  <div class="stat-text">Concluídas</div>
+               </div>
             </div>
-        </div>
-    </div>
+         </div>
+      </div>
+   </div>
 </div>
-
 <!-- Lista de Listas -->
 <div class="row">
-    <div class="col-12">
-        {% if listas %}
-            {% for lista in listas %}
-                <div class="lista-card {{ lista.status }}">
-                    <div class="lista-card-header">
-                        <div class="d-flex">
-                            <div class="lista-icon me-2 me-md-3">
-                                <i class="{{ lista.icone }}"></i>
-                            </div>
-                            <div class="pe-5"> <!-- Adicionado padding-right para evitar sobreposição com os botões -->
-                                <h3 class="lista-title">{{ lista.nome }}</h3>
-                                {% if lista.objetivo %}
-                                    <p class="lista-objetivo">{{ lista.objetivo }}</p>
-                                {% endif %}
-                                <div class="lista-meta">
-                                    <span>
-                                        <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
-                                    </span>
-                                    {% if lista.data_objetivo %}
-                                        <span>
-                                            <i class="fas fa-hourglass-half me-1"></i> 
-                                            {% if lista.dias_restantes < 0 %}
-                                                <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
-                                            {% elif lista.dias_restantes == 0 %}
-                                                <span class="text-warning">Vence hoje</span>
-                                            {% else %}
-                                                <span>{{ lista.dias_restantes }} dias restantes</span>
-                                            {% endif %}
-                                        </span>
-                                    {% endif %}
-                                    <span class="badge badge-status {{ lista.status }}">{{ lista.get_status_display }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="lista-actions">
-                            <a href="#" class="btn-icon view-lista" data-lista-id="{{ lista.id }}" title="Ver detalhes">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="#" class="btn-icon edit-lista" data-lista-id="{{ lista.id }}" title="Editar lista">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <div class="dropdown d-inline-block">
-                                <button class="btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item add-item" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-plus me-2"></i> Adicionar item</a></li>
-                                    <li><a class="dropdown-item change-status" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-sync-alt me-2"></i> Mudar status</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item delete-lista text-danger" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-trash me-2"></i> Excluir lista</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="lista-card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="m-0">Itens</h6>
-                            <span class="text-muted small">{{ lista.itens.count }} total | {{ lista.porcentagem_concluida }}% concluído</span>
-                        </div>
-                        <div class="progress mb-3">
-                            <div class="progress-bar" role="progressbar" style="width: {{ lista.porcentagem_concluida }}%" aria-valuenow="{{ lista.porcentagem_concluida }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        
-                        {% if lista.itens.count > 0 %}
-                            <div class="lista-itens">
-                                {% for item in lista.itens.all|slice:":3" %}
-                                    <div class="lista-item {{ item.prioridade }} {% if item.status == 'concluido' %}concluido{% endif %}">
-                                        <input type="checkbox" class="item-checkbox" {% if item.status == 'concluido' %}checked{% endif %} data-item-id="{{ item.id }}">
-                                        <span class="text-truncate">{{ item.nome }}</span>
-                                    </div>
-                                {% endfor %}
-                                
-                                {% if lista.itens.count > 3 %}
-                                    <div class="text-center mt-2">
-                                        <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="{{ lista.id }}">
-                                            Ver todos os {{ lista.itens.count }} itens
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-3">
-                                <p class="text-muted mb-2">Esta lista ainda não tem itens.</p>
-                                <button class="btn btn-sm btn-outline-primary add-item" data-lista-id="{{ lista.id }}">
-                                    <i class="fas fa-plus me-1"></i> Adicionar Item
-                                </button>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="lista-card-footer">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex flex-wrap gap-2">
-                                <!-- Itens de prioridade alta -->
-                                {% if lista.itens_alta_prioridade > 0 %}
-                                    <span title="Itens de prioridade alta">
-                                        <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens_alta_prioridade }}
-                                    </span>
-                                {% endif %}
-                                
-                                <!-- Itens de prioridade média -->
-                                {% if lista.itens_media_prioridade > 0 %}
-                                    <span title="Itens de prioridade média">
-                                        <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens_media_prioridade }}
-                                    </span>
-                                {% endif %}
-                                
-                                <!-- Itens de prioridade baixa -->
-                                {% if lista.itens_baixa_prioridade > 0 %}
-                                    <span title="Itens de prioridade baixa">
-                                        <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens_baixa_prioridade }}
-                                    </span>
-                                {% endif %}
-                            </div>
-                            <a href="#" class="btn btn-sm btn-primary view-lista" data-lista-id="{{ lista.id }}">
-                                <i class="fas fa-eye me-1"></i> Ver Lista
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <i class="fas fa-clipboard-list"></i>
-                <h4>Nenhuma lista encontrada</h4>
-                <p>Você ainda não criou nenhuma lista de tarefas. Comece criando sua primeira lista para organizar suas atividades.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
-                    <i class="fas fa-plus "></i>
-                </button>
+   <div class="col-12">
+      {% if listas %}
+      {% for lista in listas %}
+      <div class="lista-card {{ lista.status }}">
+         <div class="lista-card-header">
+            <div class="d-flex">
+               <div class="lista-icon me-2 me-md-3">
+                  <i class="{{ lista.icone }}"></i>
+               </div>
+               <div class="pe-5">
+                  <!-- Adicionado padding-right para evitar sobreposição com os botões -->
+                  <h3 class="lista-title">{{ lista.nome }}</h3>
+                  {% if lista.objetivo %}
+                  <p class="lista-objetivo">{{ lista.objetivo }}</p>
+                  {% endif %}
+                  <div class="lista-meta">
+                     <span>
+                     <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
+                     </span>
+                     {% if lista.data_objetivo %}
+                     <span>
+                     <i class="fas fa-hourglass-half me-1"></i> 
+                     {% if lista.dias_restantes < 0 %}
+                     <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
+                     {% elif lista.dias_restantes == 0 %}
+                     <span class="text-warning">Vence hoje</span>
+                     {% else %}
+                     <span>{{ lista.dias_restantes }} dias restantes</span>
+                     {% endif %}
+                     </span>
+                     {% endif %}
+                     <span class="badge badge-status {{ lista.status }}">{{ lista.get_status_display }}</span>
+                  </div>
+               </div>
             </div>
-        {% endif %}
-    </div>
+            <div class="lista-actions">
+               <a href="#" class="btn-icon view-lista" data-lista-id="{{ lista.id }}" title="Ver detalhes">
+               <i class="fas fa-eye"></i>
+               </a>
+               <a href="#" class="btn-icon edit-lista" data-lista-id="{{ lista.id }}" title="Editar lista">
+               <i class="fas fa-edit"></i>
+               </a>
+               <div class="dropdown d-inline-block">
+                  <button class="btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
+                  <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                     <li><a class="dropdown-item add-item" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-plus me-2"></i> Adicionar item</a></li>
+                     <li><a class="dropdown-item change-status" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-sync-alt me-2"></i> Mudar status</a></li>
+                     <li>
+                        <hr class="dropdown-divider">
+                     </li>
+                     <li><a class="dropdown-item delete-lista text-danger" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-trash me-2"></i> Excluir lista</a></li>
+                  </ul>
+               </div>
+            </div>
+         </div>
+         <div class="lista-card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+               <h6 class="m-0">Itens</h6>
+               <span class="text-muted small">{{ lista.itens.count }} total | {{ lista.porcentagem_concluida }}% concluído</span>
+            </div>
+            <div class="progress mb-3">
+               <div class="progress-bar" role="progressbar" style="width: {{ lista.porcentagem_concluida }}%" aria-valuenow="{{ lista.porcentagem_concluida }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {% if lista.itens.count > 0 %}
+            <div class="lista-itens">
+               {% for item in lista.itens.all|slice:":3" %}
+               <div class="lista-item {{ item.prioridade }} {% if item.status == 'concluido' %}concluido{% endif %}">
+                  <input type="checkbox" class="item-checkbox" {% if item.status == 'concluido' %}checked{% endif %} data-item-id="{{ item.id }}">
+                  <span class="text-truncate">{{ item.nome }}</span>
+               </div>
+               {% endfor %}
+               {% if lista.itens.count > 3 %}
+               <div class="text-center mt-2">
+                  <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="{{ lista.id }}">
+                  Ver todos os {{ lista.itens.count }} itens
+                  </a>
+               </div>
+               {% endif %}
+            </div>
+            {% else %}
+            <div class="text-center py-3">
+               <p class="text-muted mb-2">Esta lista ainda não tem itens.</p>
+               <button class="btn btn-sm btn-outline-primary add-item" data-lista-id="{{ lista.id }}">
+               <i class="fas fa-plus me-1"></i> Adicionar Item
+               </button>
+            </div>
+            {% endif %}
+         </div>
+         <div class="lista-card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+               <div class="d-flex flex-wrap gap-2">
+                  <!-- Itens de prioridade alta -->
+                  {% if lista.itens_alta_prioridade > 0 %}
+                  <span title="Itens de prioridade alta">
+                  <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens_alta_prioridade }}
+                  </span>
+                  {% endif %}
+                  <!-- Itens de prioridade média -->
+                  {% if lista.itens_media_prioridade > 0 %}
+                  <span title="Itens de prioridade média">
+                  <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens_media_prioridade }}
+                  </span>
+                  {% endif %}
+                  <!-- Itens de prioridade baixa -->
+                  {% if lista.itens_baixa_prioridade > 0 %}
+                  <span title="Itens de prioridade baixa">
+                  <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens_baixa_prioridade }}
+                  </span>
+                  {% endif %}
+               </div>
+               <a href="#" class="btn btn-sm btn-primary view-lista" data-lista-id="{{ lista.id }}">
+               <i class="fas fa-eye me-1"></i> Ver Lista
+               </a>
+            </div>
+         </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state">
+         <i class="fas fa-clipboard-list"></i>
+         <h4>Nenhuma lista encontrada</h4>
+         <p>Você ainda não criou nenhuma lista de tarefas. Comece criando sua primeira lista para organizar suas atividades.</p>
+         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
+         <i class="fas fa-plus "></i>
+         </button>
+      </div>
+      {% endif %}
+   </div>
 </div>
-
 <!-- Incluir o modal para criação de lista -->
 {% include "modal/modal_nova_lista.html" %}
-
 {% endblock %}
-
 {% block extra_js %}
 <script>
-    // Inicialização da página
-    $(document).ready(function() {
-        // Handler para o formulário de nova lista
-        $('#formNovaLista').on('submit', function(e) {
-            e.preventDefault();
-            
-            // Obter dados do formulário
-            const formData = {
-                nome: $('#id_nome').val(),
-                objetivo: $('#id_objetivo').val(),
-                data_objetivo: $('#id_data_objetivo').val(),
-                status: $('#id_status').val(),
-                cor: $('#id_cor').val(),
-                icone: $('#id_icone').val()
-            };
-            
-            // Enviar para a API
-            $.ajax({
-                url: '/api/listas/criar/',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(formData),
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
-                },
-                success: function(response) {
-                    // Fechar o modal
-                    $('#modalNovaLista').modal('hide');
-                    
-                    // Exibir mensagem de sucesso
-                    showMessage('success', 'Lista criada com sucesso!');
-                    
-                    // Recarregar a página para mostrar a nova lista
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                },
-                error: function(xhr) {
-                    // Exibir mensagem de erro
-                    const response = xhr.responseJSON;
-                    showMessage('danger', response.message || 'Erro ao criar lista. Tente novamente.');
-                    
-                    // Exibir erros de validação no formulário
-                    if (response.errors) {
-                        showFormErrors(response.errors);
-                    }
-                }
-            });
-        });
-        
-        // Marcar/desmarcar item como concluído
-        $('.item-checkbox').on('change', function() {
-            const itemId = $(this).data('item-id');
-            const concluido = $(this).prop('checked');
-            const novoStatus = concluido ? 'concluido' : 'pendente';
-            
-            // Atualizar a classe do item
-            if (concluido) {
-                $(this).closest('.lista-item').addClass('concluido');
-            } else {
-                $(this).closest('.lista-item').removeClass('concluido');
-            }
-            
-            // Enviar para a API
-            $.ajax({
-                url: `/api/itens/${itemId}/status/`,
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ status: novoStatus }),
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
-                },
-                success: function(response) {
-                    showMessage('success', 'Status do item atualizado!');
-                },
-
-error: function() {
-                    showMessage('danger', 'Erro ao atualizar status do item.');
-                    // Reverter a mudança no checkbox
-                    $('.item-checkbox[data-item-id="'+itemId+'"]').prop('checked', !concluido);
-                }
-            });
-        });
-        
-        // Adicionar item à lista
-        $('.add-item').on('click', function(e) {
-            e.preventDefault();
-            const listaId = $(this).data('lista-id');
-            // Redirecionar para a página da lista ou abrir modal de novo item
-            alert('Funcionalidade para adicionar item à lista ' + listaId + ' será implementada em breve!');
-        });
-        
-        // Ver lista completa
-        $('.view-lista').on('click', function(e) {
-            e.preventDefault();
-            const listaId = $(this).data('lista-id');
-            // Redirecionar para a página da lista
-            window.location.href = `/listas/${listaId}/`;
-        });
-        
-        // Editar lista
-        $('.edit-lista').on('click', function(e) {
-            e.preventDefault();
-            const listaId = $(this).data('lista-id');
-            // Abrir modal de edição ou redirecionar
-            alert('Funcionalidade para editar a lista ' + listaId + ' será implementada em breve!');
-        });
-        
-        // Excluir lista
-        $('.delete-lista').on('click', function(e) {
-            e.preventDefault();
-            const listaId = $(this).data('lista-id');
-            
-            if (confirm('Tem certeza que deseja excluir esta lista? Esta ação não pode ser desfeita.')) {
-                $.ajax({
-                    url: `/api/listas/${listaId}/excluir/`,
-                    type: 'POST',
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
-                    },
-                    success: function(response) {
-                        showMessage('success', 'Lista excluída com sucesso!');
-                        // Remover a lista da interface
-                        $(`[data-lista-id="${listaId}"]`).closest('.lista-card').fadeOut(300, function() {
-                            $(this).remove();
-                            
-                            // Se não houver mais listas, mostrar o estado vazio
-                            if ($('.lista-card').length === 0) {
-                                location.reload();
-                            }
-                        });
-                    },
-                    error: function() {
-                        showMessage('danger', 'Erro ao excluir lista. Tente novamente.');
-                    }
-                });
-            }
-        });
-        
-        // Função auxiliar para exibir mensagens
-        function showMessage(type, message) {
-            const alertHtml = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-                </div>
-            `;
-            
-            // Inserir alerta no topo da página
-            $('.page-title').before(alertHtml);
-            
-            // Auto-remover após 5 segundos
-            setTimeout(function() {
-                $('.alert').alert('close');
-            }, 5000);
-        }
-        
-        // Função para exibir erros de formulário
-        function showFormErrors(errors) {
-            // Limpar erros anteriores
-            $('.invalid-feedback').remove();
-            $('.is-invalid').removeClass('is-invalid');
-            
-            // Adicionar novas mensagens de erro
-            for (const field in errors) {
-                const input = $(`#id_${field}`);
-                input.addClass('is-invalid');
-                input.after(`<div class="invalid-feedback">${errors[field]}</div>`);
-            }
-        }
-        
-        // Ajuste para melhorar a experiência em dispositivos móveis
-        function adjustForMobile() {
-            // Se a largura da tela for menor que 576px (dispositivos muito pequenos)
-            if (window.innerWidth < 576) {
-                // Reduzir o número de itens mostrados em cada lista
-                $('.lista-item').each(function(index) {
-                    if (index > 1) { // Mostrar apenas os 2 primeiros itens em telas muito pequenas
-                        $(this).hide();
-                    }
-                });
-                
-                // Mostrar o botão "Ver todos" para listas com mais de 2 itens
-                $('.lista-itens').each(function() {
-                    const items = $(this).find('.lista-item');
-                    if (items.length > 2) {
-                        // Se o botão "Ver todos" já não existir, adicione-o
-                        if ($(this).find('.btn-view-all').length === 0) {
-                            const listaId = $(this).closest('.lista-card').find('[data-lista-id]').first().data('lista-id');
-                            const totalItems = items.length;
-                            $(this).append(`
-                                <div class="text-center mt-2">
-                                    <a href="#" class="btn btn-sm btn-outline-primary view-lista btn-view-all" data-lista-id="${listaId}">
-                                        Ver todos os ${totalItems} itens
-                                    </a>
-                                </div>
-                            `);
-                        }
-                    }
-                });
-            } else {
-                // Em telas maiores, mostrar até 3 itens conforme o design original
-                $('.lista-item').show();
-                $('.btn-view-all').parent().remove();
-            }
-        }
-        
-        // Executar o ajuste na inicialização
-        adjustForMobile();
-        
-        // Executar o ajuste quando a tela for redimensionada
-        $(window).on('resize', function() {
-            adjustForMobile();
-        });
-    });
+   // Inicialização da página
+   $(document).ready(function() {
+       // Handler para o formulário de nova lista
+       $('#formNovaLista').on('submit', function(e) {
+           e.preventDefault();
+           
+           // Obter dados do formulário
+           const formData = {
+               nome: $('#id_nome').val(),
+               objetivo: $('#id_objetivo').val(),
+               data_objetivo: $('#id_data_objetivo').val(),
+               status: $('#id_status').val(),
+               cor: $('#id_cor').val(),
+               icone: $('#id_icone').val()
+           };
+           
+           // Enviar para a API
+           $.ajax({
+               url: '/api/listas/criar/',
+               type: 'POST',
+               contentType: 'application/json',
+               data: JSON.stringify(formData),
+               beforeSend: function(xhr) {
+                   xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+               },
+               success: function(response) {
+                   // Fechar o modal
+                   $('#modalNovaLista').modal('hide');
+                   
+                   // Exibir mensagem de sucesso
+                   showMessage('success', 'Lista criada com sucesso!');
+                   
+                   // Recarregar a página para mostrar a nova lista
+                   setTimeout(function() {
+                       location.reload();
+                   }, 1000);
+               },
+               error: function(xhr) {
+                   // Exibir mensagem de erro
+                   const response = xhr.responseJSON;
+                   showMessage('danger', response.message || 'Erro ao criar lista. Tente novamente.');
+                   
+                   // Exibir erros de validação no formulário
+                   if (response.errors) {
+                       showFormErrors(response.errors);
+                   }
+               }
+           });
+       });
+       
+       // Marcar/desmarcar item como concluído
+       $('.item-checkbox').on('change', function() {
+           const itemId = $(this).data('item-id');
+           const concluido = $(this).prop('checked');
+           const novoStatus = concluido ? 'concluido' : 'pendente';
+           
+           // Atualizar a classe do item
+           if (concluido) {
+               $(this).closest('.lista-item').addClass('concluido');
+           } else {
+               $(this).closest('.lista-item').removeClass('concluido');
+           }
+           
+           // Enviar para a API
+           $.ajax({
+               url: `/api/itens/${itemId}/status/`,
+               type: 'POST',
+               contentType: 'application/json',
+               data: JSON.stringify({ status: novoStatus }),
+               beforeSend: function(xhr) {
+                   xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+               },
+               success: function(response) {
+                   showMessage('success', 'Status do item atualizado!');
+               },
+   
+   error: function() {
+                   showMessage('danger', 'Erro ao atualizar status do item.');
+                   // Reverter a mudança no checkbox
+                   $('.item-checkbox[data-item-id="'+itemId+'"]').prop('checked', !concluido);
+               }
+           });
+       });
+       
+       // Adicionar item à lista
+       $('.add-item').on('click', function(e) {
+           e.preventDefault();
+           const listaId = $(this).data('lista-id');
+           // Redirecionar para a página da lista ou abrir modal de novo item
+           alert('Funcionalidade para adicionar item à lista ' + listaId + ' será implementada em breve!');
+       });
+       
+       // Ver lista completa
+       $('.view-lista').on('click', function(e) {
+           e.preventDefault();
+           const listaId = $(this).data('lista-id');
+           // Redirecionar para a página da lista
+           window.location.href = `/listas/${listaId}/`;
+       });
+       
+       // Editar lista
+       $('.edit-lista').on('click', function(e) {
+           e.preventDefault();
+           const listaId = $(this).data('lista-id');
+           // Abrir modal de edição ou redirecionar
+           alert('Funcionalidade para editar a lista ' + listaId + ' será implementada em breve!');
+       });
+       
+       // Excluir lista
+       $('.delete-lista').on('click', function(e) {
+           e.preventDefault();
+           const listaId = $(this).data('lista-id');
+           
+           if (confirm('Tem certeza que deseja excluir esta lista? Esta ação não pode ser desfeita.')) {
+               $.ajax({
+                   url: `/api/listas/${listaId}/excluir/`,
+                   type: 'POST',
+                   beforeSend: function(xhr) {
+                       xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                   },
+                   success: function(response) {
+                       showMessage('success', 'Lista excluída com sucesso!');
+                       // Remover a lista da interface
+                       $(`[data-lista-id="${listaId}"]`).closest('.lista-card').fadeOut(300, function() {
+                           $(this).remove();
+                           
+                           // Se não houver mais listas, mostrar o estado vazio
+                           if ($('.lista-card').length === 0) {
+                               location.reload();
+                           }
+                       });
+                   },
+                   error: function() {
+                       showMessage('danger', 'Erro ao excluir lista. Tente novamente.');
+                   }
+               });
+           }
+       });
+       
+       // Função auxiliar para exibir mensagens
+       function showMessage(type, message) {
+           const alertHtml = `
+               <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                   ${message}
+                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+               </div>
+           `;
+           
+           // Inserir alerta no topo da página
+           $('.page-title').before(alertHtml);
+           
+           // Auto-remover após 5 segundos
+           setTimeout(function() {
+               $('.alert').alert('close');
+           }, 5000);
+       }
+       
+       // Função para exibir erros de formulário
+       function showFormErrors(errors) {
+           // Limpar erros anteriores
+           $('.invalid-feedback').remove();
+           $('.is-invalid').removeClass('is-invalid');
+           
+           // Adicionar novas mensagens de erro
+           for (const field in errors) {
+               const input = $(`#id_${field}`);
+               input.addClass('is-invalid');
+               input.after(`<div class="invalid-feedback">${errors[field]}</div>`);
+           }
+       }
+       
+       // Ajuste para melhorar a experiência em dispositivos móveis
+       function adjustForMobile() {
+           // Se a largura da tela for menor que 576px (dispositivos muito pequenos)
+           if (window.innerWidth < 576) {
+               // Reduzir o número de itens mostrados em cada lista
+               $('.lista-item').each(function(index) {
+                   if (index > 1) { // Mostrar apenas os 2 primeiros itens em telas muito pequenas
+                       $(this).hide();
+                   }
+               });
+               
+               // Mostrar o botão "Ver todos" para listas com mais de 2 itens
+               $('.lista-itens').each(function() {
+                   const items = $(this).find('.lista-item');
+                   if (items.length > 2) {
+                       // Se o botão "Ver todos" já não existir, adicione-o
+                       if ($(this).find('.btn-view-all').length === 0) {
+                           const listaId = $(this).closest('.lista-card').find('[data-lista-id]').first().data('lista-id');
+                           const totalItems = items.length;
+                           $(this).append(`
+                               <div class="text-center mt-2">
+                                   <a href="#" class="btn btn-sm btn-outline-primary view-lista btn-view-all" data-lista-id="${listaId}">
+                                       Ver todos os ${totalItems} itens
+                                   </a>
+                               </div>
+                           `);
+                       }
+                   }
+               });
+           } else {
+               // Em telas maiores, mostrar até 3 itens conforme o design original
+               $('.lista-item').show();
+               $('.btn-view-all').parent().remove();
+           }
+       }
+       
+       // Executar o ajuste na inicialização
+       adjustForMobile();
+       
+       // Executar o ajuste quando a tela for redimensionada
+       $(window).on('resize', function() {
+           adjustForMobile();
+       });
+   });
 </script>
 {% endblock %}

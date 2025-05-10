@@ -1,0 +1,76 @@
+<!-- Modal para Criação de Novo Item -->
+<div class="modal fade" id="modalNovoItem" tabindex="-1" aria-labelledby="modalNovoItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovoItemLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Novo Item
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formNovoItem" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" id="id_item_lista" name="lista">
+                    
+                    <div class="mb-3">
+                        <label for="id_item_nome" class="form-label">Nome do Item*</label>
+                        <input type="text" class="form-control" id="id_item_nome" name="nome" placeholder="Ex: Comprar leite" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_item_descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="id_item_descricao" name="descricao" rows="2" placeholder="Detalhes adicionais sobre o item"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_item_data_hora" class="form-label">Data e Hora Limite</label>
+                        <input type="datetime-local" class="form-control" id="id_item_data_hora" name="data_hora">
+                        <div class="form-text">Opcional: prazo para concluir este item</div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="id_item_prioridade" class="form-label">Prioridade</label>
+                            <select class="form-select" id="id_item_prioridade" name="prioridade">
+                                <option value="baixa">Baixa</option>
+                                <option value="media" selected>Média</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-6">
+                            <label for="id_item_status" class="form-label">Status</label>
+                            <select class="form-select" id="id_item_status" name="status">
+                                <option value="pendente" selected>Pendente</option>
+                                <option value="em_andamento">Em andamento</option>
+                                <option value="concluido">Concluído</option>
+                                <option value="adiado">Adiado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_item_notas" class="form-label">Notas Adicionais</label>
+                        <textarea class="form-control" id="id_item_notas" name="notas" rows="2" placeholder="Qualquer informação adicional relevante"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex flex-column flex-sm-row w-100">
+                        <button type="button" class="btn btn-outline-secondary mb-2 mb-sm-0 me-sm-2 order-2 order-sm-1" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary mb-2 mb-sm-0 order-1 order-sm-2 flex-fill">
+                            <i class="fas fa-save me-1"></i> Salvar Item
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
