@@ -125,5 +125,67 @@
         
         // Também ajustar quando a janela for redimensionada
         window.addEventListener('resize', adjustModalForMobile);
+        
+        // Handler para o formulário de nova lista
+        $('#formNovaLista').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Obter dados do formulário
+            const formData = {
+                nome: $('#id_nome').val(),
+                objetivo: $('#id_objetivo').val(),
+                data_objetivo: $('#id_data_objetivo').val(),
+                status: $('#id_status').val(),
+                cor: $('#id_cor').val(),
+                icone: $('#id_icone').val()
+            };
+            
+            // Enviar para a API
+            $.ajax({
+                url: '/api/listas/criar/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                },
+                success: function(response) {
+                    // Fechar o modal
+                    $('#modalNovaLista').modal('hide');
+                    
+                    // Exibir mensagem de sucesso
+                    showMessage('success', 'Lista criada com sucesso!');
+                    
+                    // Recarregar a página para mostrar a nova lista
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    // Exibir mensagem de erro
+                    const response = xhr.responseJSON;
+                    showMessage('danger', response.message || 'Erro ao criar lista. Tente novamente.');
+                    
+                    // Exibir erros de validação no formulário
+                    if (response.errors) {
+                        showFormErrors(response.errors);
+                    }
+                }
+            });
+        });
+        
+        // Função para exibir erros de formulário de listas
+        function showFormErrors(errors) {
+            // Limpar erros anteriores
+            $('#formNovaLista .invalid-feedback').empty();
+            $('#formNovaLista .is-invalid').removeClass('is-invalid');
+            
+            // Adicionar novas mensagens de erro
+            for (const field in errors) {
+                const input = $(`#id_${field}`);
+                input.addClass('is-invalid');
+                input.next('.invalid-feedback').html(errors[field]);
+            }
+        }
     });
 </script>

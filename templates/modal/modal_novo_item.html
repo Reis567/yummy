@@ -74,3 +74,102 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajustar modal em dispositivos móveis
+        const adjustModalForMobile = function() {
+            const modalBody = document.querySelector('#modalNovoItem .modal-body');
+            if (window.innerWidth < 576 && modalBody) {
+                // Reduzir padding em dispositivos móveis
+                modalBody.style.padding = '1rem';
+                
+                // Reduzir número de linhas do textarea
+                const textareas = document.querySelectorAll('#modalNovoItem textarea');
+                textareas.forEach(textarea => {
+                    textarea.rows = 2;
+                });
+            }
+        };
+        
+        // Executar ajuste quando o modal for aberto
+        $('#modalNovoItem').on('shown.bs.modal', function () {
+            adjustModalForMobile();
+        });
+        
+        // Também ajustar quando a janela for redimensionada
+        window.addEventListener('resize', adjustModalForMobile);
+        
+        // Handler para o formulário de novo item
+        $('#formNovoItem').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Obter dados do formulário
+            const formData = {
+                lista: $('#id_item_lista').val(),
+                nome: $('#id_item_nome').val(),
+                descricao: $('#id_item_descricao').val(),
+                data_hora: $('#id_item_data_hora').val() || null,
+                prioridade: $('#id_item_prioridade').val(),
+                status: $('#id_item_status').val(),
+                notas: $('#id_item_notas').val() || null,
+                ordem: 0 // A ordem será ajustada automaticamente
+            };
+            
+            // Enviar para a API
+            $.ajax({
+                url: '/api/itens/criar/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                },
+                success: function(response) {
+                    // Fechar o modal
+                    $('#modalNovoItem').modal('hide');
+                    
+                    // Exibir mensagem de sucesso
+                    showMessage('success', 'Item criado com sucesso!');
+                    
+                    // Recarregar a página para mostrar o novo item
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    // Exibir mensagem de erro
+                    const response = xhr.responseJSON;
+                    showMessage('danger', response.message || 'Erro ao criar item. Tente novamente.');
+                    
+                    // Exibir erros de validação no formulário
+                    if (response.errors) {
+                        showFormErrorsItem(response.errors);
+                    }
+                }
+            });
+        });
+        
+        // Função para exibir erros de validação no formulário de item
+        function showFormErrorsItem(errors) {
+            // Limpar erros anteriores
+            $('#formNovoItem .invalid-feedback').empty();
+            $('#formNovoItem .is-invalid').removeClass('is-invalid');
+            
+            // Adicionar novas mensagens de erro
+            for (const field in errors) {
+                const fieldName = field === 'lista' ? 'item_lista' : 
+                                field === 'nome' ? 'item_nome' : 
+                                field === 'descricao' ? 'item_descricao' : 
+                                field === 'data_hora' ? 'item_data_hora' : 
+                                field === 'prioridade' ? 'item_prioridade' : 
+                                field === 'status' ? 'item_status' : 
+                                field === 'notas' ? 'item_notas' : field;
+                                
+                const input = $(`#id_${fieldName}`);
+                input.addClass('is-invalid');
+                input.next('.invalid-feedback').html(errors[field]);
+            }
+        }
+    });
+</script>
