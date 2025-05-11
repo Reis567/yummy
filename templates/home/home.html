@@ -136,6 +136,7 @@
                 {% if lista.itens.count > 0 %}
                     <div class="lista-itens">
                         {% for item in lista.itens.all %}
+                            <!-- Modificação no bloco de lista-item para adicionar botão de remoção -->
                             <div class="lista-item {{ item.prioridade }} {% if item.status == 'concluido' %}concluido{% endif %}">
                                 <input type="checkbox" class="item-checkbox" {% if item.status == 'concluido' %}checked{% endif %} data-item-id="{{ item.id }}">
                                 <div class="item-content">
@@ -156,7 +157,13 @@
                                         {% endif %}
                                     </div>
                                 </div>
+                                <!-- Novo botão de remover -->
+                                <button class="btn-remove-item" type="button" data-item-id="{{ item.id }}" title="Remover item">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
+
+                            <!-- Este trecho será substituído no template home.html -->
                         {% endfor %}
                         
 

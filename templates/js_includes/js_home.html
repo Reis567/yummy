@@ -52,6 +52,282 @@ function atualizarProgressoLista(listaCard, concluido, itemId) {
     return novaPortcentagem;
 }
 
+// Função para remover um item
+function removerItem(itemId, element) {
+    console.log('DEBUG: removerItem iniciada', { itemId });
+    
+    // Adicionar classe de animação de remoção
+    $(element).addClass('removing-item');
+    
+    // Obter a lista-card pai para atualização posterior
+    const listaCard = $(element).closest('.lista-card');
+    const listaId = listaCard.find('[data-lista-id]').first().data('lista-id');
+    
+    // Fazer a chamada para a API de exclusão
+    $.ajax({
+        url: `/api/itens/${itemId}/excluir/`,
+        type: 'POST',
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+        },
+        success: function(response) {
+            console.log('DEBUG: Item removido com sucesso', response);
+            
+            // Após a animação, remover o elemento do DOM
+            setTimeout(() => {
+                $(element).remove();
+                
+                // Atualizar contagem de itens e progresso
+                atualizarMetadadosLista(listaCard);
+                
+                // Mostrar mensagem de sucesso
+                showMessage('success', 'Item removido com sucesso!', true);
+            }, 500); // Corresponde à duração da animação
+        },
+        error: function(error) {
+            console.error('DEBUG: Erro ao remover item', error);
+            
+            // Remover classe de animação em caso de erro
+            $(element).removeClass('removing-item');
+            
+            // Mostrar mensagem de erro
+            showMessage('danger', 'Erro ao remover o item. Tente novamente.', true);
+        }
+    });
+}
+
+// Função para atualizar metadados da lista após remoção de um item
+function atualizarMetadadosLista(listaCard) {
+    // Contar total de itens
+    const totalItens = listaCard.find('.lista-item').length;
+    
+    // Contar itens concluídos
+    const itensConcluidos = listaCard.find('.lista-item.concluido').length;
+    
+    // Calcular porcentagem concluída
+    let porcentagem = 0;
+    if (totalItens > 0) {
+        porcentagem = Math.round((itensConcluidos / totalItens) * 100);
+    }
+    
+    // Atualizar texto de contagem e porcentagem
+    listaCard.find('.text-muted.small').text(`${totalItens} total | ${porcentagem}% concluído`);
+    
+    // Atualizar barra de progresso
+    const progressBar = listaCard.find('.progress-bar');
+    progressBar.css('width', porcentagem + '%');
+    progressBar.attr('aria-valuenow', porcentagem);
+    
+    // Adicionar classe de animação
+    progressBar.addClass('progress-bar-animated');
+    setTimeout(function() {
+        progressBar.removeClass('progress-bar-animated');
+    }, 1000);
+    
+    // Se não houver itens, mostrar mensagem "Esta lista ainda não tem itens"
+    if (totalItens === 0) {
+        const listaCardBody = listaCard.find('.lista-card-body');
+        const listaItens = listaCardBody.find('.lista-itens');
+        
+        listaItens.remove();
+        
+        const listaId = listaCard.find('[data-lista-id]').first().data('lista-id');
+        
+        listaCardBody.append(`
+            <div class="text-center py-3">
+                <p class="text-muted mb-2">Esta lista ainda não tem itens.</p>
+                <button class="btn btn-sm btn-outline-primary add-item" data-lista-id="${listaId}">
+                    <i class="fas fa-plus me-1"></i> Adicionar Item
+                </button>
+            </div>
+        `);
+        
+        // Adicionar event listener ao novo botão
+        listaCardBody.find('.add-item').on('click', function(e) {
+            e.preventDefault();
+            const listaId = $(this).data('lista-id');
+            const listaNome = $(this).closest('.lista-card').find('.lista-title').text().trim();
+            
+            // Preencher o ID da lista no formulário e atualizar o título do modal
+            $('#id_item_lista').val(listaId);
+            $('#modalNovoItemLabel').html(`<i class="fas fa-plus-circle me-2"></i>Novo Item em "${listaNome}"`);
+            
+            // Resetar o formulário
+            $('#formNovoItem').trigger('reset');
+            
+            // Mostrar o modal
+            $('#modalNovoItem').modal('show');
+        });
+    }
+    
+    // Atualizar contadores de prioridade
+    atualizarContadoresPrioridade(listaCard);
+}
+
+// Função para atualizar contadores de prioridade
+function atualizarContadoresPrioridade(listaCard) {
+    // Contar itens por prioridade
+    const itensAlta = listaCard.find('.lista-item.alta').length;
+    const itensMedia = listaCard.find('.lista-item.media').length;
+    const itensBaixa = listaCard.find('.lista-item.baixa').length;
+    
+    // Atualizar ou remover contador de alta prioridade
+    atualizarContadorPrioridade(listaCard, 'alta', itensAlta, 'Itens de prioridade alta', 'fa-arrow-up', 'text-danger');
+    
+    // Atualizar ou remover contador de média prioridade
+    atualizarContadorPrioridade(listaCard, 'media', itensMedia, 'Itens de prioridade média', 'fa-equals', 'text-warning');
+    
+    // Atualizar ou remover contador de baixa prioridade
+    atualizarContadorPrioridade(listaCard, 'baixa', itensBaixa, 'Itens de prioridade baixa', 'fa-arrow-down', 'text-success');
+}
+
+// Função auxiliar para atualizar um contador de prioridade específico
+function atualizarContadorPrioridade(listaCard, prioridade, quantidade, titulo, icone, corClass) {
+    const elementoContador = listaCard.find(`.lista-card-footer span[title="${titulo}"]`);
+    
+    if (quantidade > 0) {
+        if (elementoContador.length === 0) {
+            // Criar contador se não existir
+            listaCard.find('.d-flex.flex-wrap.gap-2').append(`
+                <span title="${titulo}">
+                    <i class="fas ${icone} ${corClass} me-1"></i>${quantidade}
+                </span>
+            `);
+        } else {
+            // Atualizar contador existente
+            elementoContador.html(`<i class="fas ${icone} ${corClass} me-1"></i>${quantidade}`);
+        }
+    } else if (elementoContador.length > 0) {
+        // Remover contador se quantidade for zero
+        elementoContador.remove();
+    }
+}
+
+// Inicialização da funcionalidade de remoção de itens
+$(document).ready(function() {
+    console.log('DEBUG: Inicializando funcionalidade de remoção de itens');
+    
+    // Handler para o botão de remover item
+    $(document).on('click', '.btn-remove-item', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const itemId = $(this).data('item-id');
+        const itemElement = $(this).closest('.lista-item');
+        const itemNome = itemElement.find('.item-nome').text().trim();
+        
+        // Confirmar antes de remover
+        if (confirm(`Tem certeza que deseja remover o item "${itemNome}"?`)) {
+            removerItem(itemId, itemElement);
+        }
+    });
+    
+    // Implementação do swipe para remover (touch devices)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let currentItem = null;
+    
+    // Touch start event
+    $(document).on('touchstart', '.lista-item', function(e) {
+        touchStartX = e.originalEvent.touches[0].clientX;
+        currentItem = $(this);
+        // Remover qualquer elemento de confirmação que possa existir
+        $('.delete-confirm').remove();
+    });
+    
+    // Touch move event
+    $(document).on('touchmove', '.lista-item', function(e) {
+        if (!currentItem) return;
+        
+        const currentX = e.originalEvent.touches[0].clientX;
+        const diffX = touchStartX - currentX;
+        
+        // Se estiver deslizando para a esquerda (remover)
+        if (diffX > 20) {
+            e.preventDefault(); // Impedir o scroll
+            
+            // Limitar o movimento para não ultrapassar a área de confirmação
+            const translateX = Math.min(diffX, 80);
+            $(this).css('transform', `translateX(-${translateX}px)`);
+            
+            // Adicionar área de confirmação se não existir
+            if ($(this).find('.delete-confirm').length === 0) {
+                $(this).append('<div class="delete-confirm"><i class="fas fa-trash-alt"></i></div>');
+            }
+            
+            // Se o movimento for suficiente para mostrar a opção de exclusão
+            if (diffX > 60) {
+                $(this).addClass('swipe-to-delete');
+            } else {
+                $(this).removeClass('swipe-to-delete');
+            }
+        }
+    });
+    
+    // Touch end event
+    $(document).on('touchend', '.lista-item', function(e) {
+        if (!currentItem) return;
+        
+        touchEndX = e.originalEvent.changedTouches[0].clientX;
+        const diffX = touchStartX - touchEndX;
+        
+        // Se o swipe for suficiente para acionar a exclusão
+        if (diffX > 80) {
+            const itemId = $(this).find('.item-checkbox').data('item-id');
+            const itemNome = $(this).find('.item-nome').text().trim();
+            
+            // Criar alerta de confirmação
+            const alertHTML = `
+                <div class="delete-confirm-alert">
+                    <span>Remover "${itemNome.length > 15 ? itemNome.substring(0, 15) + '...' : itemNome}"?</span>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-light cancel-delete">Não</button>
+                        <button class="btn btn-sm btn-danger confirm-delete" data-item-id="${itemId}">Sim</button>
+                    </div>
+                </div>
+            `;
+            
+            // Remover alertas anteriores
+            $('.delete-confirm-alert').remove();
+            
+            // Adicionar o novo alerta
+            $('body').append(alertHTML);
+            
+            // Handler para cancelar
+            $('.cancel-delete').on('click', function() {
+                currentItem.css('transform', '');
+                currentItem.removeClass('swipe-to-delete');
+                $('.delete-confirm').remove();
+                $('.delete-confirm-alert').remove();
+            });
+            
+            // Handler para confirmar
+            $('.confirm-delete').on('click', function() {
+                const itemId = $(this).data('item-id');
+                removerItem(itemId, currentItem);
+                $('.delete-confirm-alert').remove();
+            });
+            
+            // Auto-remover após 5 segundos se não houver interação
+            setTimeout(function() {
+                $('.delete-confirm-alert').fadeOut(300, function() {
+                    $(this).remove();
+                });
+                currentItem.css('transform', '');
+                currentItem.removeClass('swipe-to-delete');
+                $('.delete-confirm').remove();
+            }, 5000);
+        } else {
+            // Se o swipe não for suficiente, voltar ao normal
+            $(this).css('transform', '');
+            $(this).removeClass('swipe-to-delete');
+            $('.delete-confirm').remove();
+        }
+        
+        currentItem = null;
+    });
+});
+
 // Inicialização da página
 $(document).ready(function() {
     console.log('DEBUG: document.ready da página home iniciado');
@@ -96,6 +372,11 @@ $(document).ready(function() {
                     const porcentagemAPI = response.item.lista.porcentagem_concluida;
                     if (porcentagemAPI !== novaPortcentagem) {
                         console.log('DEBUG: Atualizando porcentagem da API:', porcentagemAPI);
+                        
+                        // Obter a contagem de itens atual da interface
+                        const infoText = listaCard.find('.text-muted.small');
+                        const textoAtual = infoText.text();
+                        const totalItens = parseInt(textoAtual.split('|')[0].trim().split(' ')[0]);
                         
                         // Atualizar texto
                         listaCard.find('.text-muted.small').text(
@@ -232,7 +513,7 @@ $(document).ready(function() {
         const alertHtml = `
             <div class="alert alert-${type} alert-dismissible fade show ${alertClass}" role="alert">
                 ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+
             </div>
         `;
         
@@ -412,6 +693,10 @@ window.adicionarNovoItemNaUI = function(listaCard, item) {
                     ` : ''}
                 </div>
             </div>
+            <!-- Adicionando botão de remover para novos itens -->
+            <button class="btn-remove-item" type="button" data-item-id="${item.id}" title="Remover item">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     `;
     
@@ -567,6 +852,21 @@ window.adicionarNovoItemNaUI = function(listaCard, item) {
                 showMessage('danger', 'Erro ao atualizar status do item.');
             }
         });
+    });
+    
+    // Adicionar handler para o botão de remover
+    novoItem.find('.btn-remove-item').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const itemId = $(this).data('item-id');
+        const itemElement = $(this).closest('.lista-item');
+        const itemNome = itemElement.find('.item-nome').text().trim();
+        
+        // Confirmar antes de remover
+        if (confirm(`Tem certeza que deseja remover o item "${itemNome}"?`)) {
+            removerItem(itemId, itemElement);
+        }
     });
     
     console.log('DEBUG: Handler do checkbox adicionado');
