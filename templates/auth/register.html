@@ -6,19 +6,19 @@
 {% block auth_content %}
 <div class="auth-content">
     <div class="auth-form-container">
-        <div class="auth-header text-center mb-4">
+        <div class="auth-header text-center mb-3">
             <h1 class="auth-title">Criar Conta</h1>
-            <p class="auth-subtitle">Junte-se ao Yummy e comece a organizar suas listas!</p>
+            <p class="auth-subtitle">Junte-se ao Yummy hoje!</p>
         </div>
         
         <!-- Formulário de registro -->
-        <form method="post" class="mb-4">
+        <form method="post" class="mb-3">
             {% csrf_token %}
             
             <!-- Mensagens de erro -->
             {% if form.errors %}
                 <div class="alert alert-danger">
-                    <p>Por favor, corrija os erros abaixo:</p>
+                    <p class="mb-0">Por favor, corrija os erros abaixo:</p>
                     {{ form.non_field_errors }}
                 </div>
             {% endif %}
@@ -32,8 +32,8 @@
                 {% endfor %}
             {% endif %}
             
-            <div class="row">
-                <div class="col-md-6 mb-3">
+            <div class="row g-2">
+                <div class="col-12 col-sm-6 mb-3">
                     <label for="id_first_name" class="form-label">Nome</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -46,7 +46,7 @@
                     {% endif %}
                 </div>
                 
-                <div class="col-md-6 mb-3">
+                <div class="col-12 col-sm-6 mb-3">
                     <label for="id_last_name" class="form-label">Sobrenome</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -71,7 +71,9 @@
                         {{ form.username.errors }}
                     </div>
                 {% endif %}
-                <div class="form-text">Seu nome de usuário deve ser único e conter apenas letras, números e @/./+/-/_.</div>
+                <div class="form-text">
+                    <small>Seu nome de usuário deve ser único e conter apenas letras, números e @/./+/-/_.</small>
+                </div>
             </div>
             
             <div class="mb-3">
@@ -98,10 +100,12 @@
                         {{ form.password1.errors }}
                     </div>
                 {% endif %}
-                <div class="form-text">Sua senha deve ter pelo menos 8 caracteres e não pode ser muito comum.</div>
+                <div class="form-text">
+                    <small>Sua senha deve ter pelo menos 8 caracteres e não pode ser muito comum.</small>
+                </div>
             </div>
             
-            <div class="mb-4">
+            <div class="mb-3">
                 <label for="id_password2" class="form-label">Confirme a senha</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
@@ -114,21 +118,22 @@
                 {% endif %}
             </div>
             
-            <div class="form-check mb-4">
+            <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="termsCheck" required>
                 <label class="form-check-label" for="termsCheck">
-                    Concordo com os <a href="#" class="text-decoration-none">Termos de Serviço</a> e <a href="#" class="text-decoration-none">Política de Privacidade</a>
+                    <small>Concordo com os <a href="#" class="text-decoration-none">Termos de Serviço</a> e <a href="#" class="text-decoration-none">Política de Privacidade</a></small>
                 </label>
             </div>
             
-            <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
+            <button type="submit" class="btn btn-primary w-100 mb-3">
                 <i class="fas fa-user-plus me-2"></i>Criar Conta
             </button>
             
             <div class="text-center">
-                <p>Já tem uma conta? <a href="{% url 'app_yummy1:login' %}" class="text-decoration-none">Faça login</a></p>
+                <p class="mb-0">Já tem uma conta? <a href="{% url 'app_yummy1:login' %}" class="text-decoration-none">Faça login</a></p>
             </div>
         </form>
     </div>
 </div>
+
 {% endblock %}
