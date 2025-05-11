@@ -1,0 +1,605 @@
+<script>
+// Função para atualizar a barra de progresso e porcentagem
+function atualizarProgressoLista(listaCard, concluido, itemId) {
+    console.log('DEBUG: atualizarProgressoLista iniciada', { listaCard: listaCard.length, concluido, itemId });
+    
+    // Obter valores atuais para cálculo
+    const infoText = listaCard.find('.text-muted.small');
+    const textoAtual = infoText.text();
+    const totalItens = parseInt(textoAtual.split('|')[0].trim().split(' ')[0]);
+    let percentualAtual = parseInt(textoAtual.split('|')[1].trim().split('%')[0]);
+    
+    console.log('DEBUG: Valores atuais:', { totalItens, percentualAtual, textoAtual });
+    
+    // Calcular nova porcentagem com base na ação (marcar/desmarcar)
+    let novaPortcentagem;
+    if (concluido) {
+        // Se estamos marcando como concluído, incrementar a porcentagem
+        novaPortcentagem = Math.min(100, percentualAtual + Math.round(100 / totalItens));
+    } else {
+        // Se estamos desmarcando como concluído, decrementar a porcentagem
+        novaPortcentagem = Math.max(0, percentualAtual - Math.round(100 / totalItens));
+    }
+    
+    console.log('DEBUG: Nova porcentagem calculada:', novaPortcentagem);
+    
+    // Atualizar texto de porcentagem
+    infoText.text(`${totalItens} total | ${novaPortcentagem}% concluído`);
+    
+    // Selecionar e atualizar a barra de progresso
+    const progressBar = listaCard.find('.progress-bar');
+    
+    // Verificar se encontrou a barra de progresso
+    console.log('DEBUG: Progress bar encontrada:', progressBar.length);
+    
+    // Atualização visual com animação
+    progressBar.css('width', novaPortcentagem + '%');
+    progressBar.attr('aria-valuenow', novaPortcentagem);
+    
+    // Adicionar classe de animação temporariamente
+    progressBar.addClass('progress-bar-animated');
+    setTimeout(function() {
+        progressBar.removeClass('progress-bar-animated');
+    }, 1000);
+    
+    // Se chegou a 100%, adicionar uma classe para mudar a cor
+    if (novaPortcentagem >= 100) {
+        progressBar.addClass('bg-success');
+    } else {
+        progressBar.removeClass('bg-success');
+    }
+    
+    return novaPortcentagem;
+}
+
+// Inicialização da página
+$(document).ready(function() {
+    console.log('DEBUG: document.ready da página home iniciado');
+    
+    // Remover todos os handlers anteriores para evitar duplicação
+    $('.item-checkbox').off('change');
+    
+    // Adicionar o novo handler para checkbox
+    $('.item-checkbox').on('change', function() {
+        console.log('DEBUG: Checkbox alterado');
+        const itemId = $(this).data('item-id');
+        const concluido = $(this).prop('checked');
+        const novoStatus = concluido ? 'concluido' : 'pendente';
+        const itemElement = $(this).closest('.lista-item');
+        const listaCard = itemElement.closest('.lista-card');
+        
+        // Feedback visual imediato
+        if (concluido) {
+            itemElement.addClass('concluido');
+        } else {
+            itemElement.removeClass('concluido');
+        }
+        
+        // Atualizar barra de progresso imediatamente para feedback visual
+        const novaPortcentagem = atualizarProgressoLista(listaCard, concluido, itemId);
+        
+        // Enviar para a API
+        $.ajax({
+            url: `/api/itens/${itemId}/status/`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ status: novoStatus }),
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+            },
+            success: function(response) {
+                console.log('DEBUG: API response', response);
+                
+                // A barra já foi atualizada para feedback visual rápido.
+                // Se a API retornou uma porcentagem diferente, ajustamos
+                if (response.item && response.item.lista && response.item.lista.porcentagem_concluida !== undefined) {
+                    const porcentagemAPI = response.item.lista.porcentagem_concluida;
+                    if (porcentagemAPI !== novaPortcentagem) {
+                        console.log('DEBUG: Atualizando porcentagem da API:', porcentagemAPI);
+                        
+                        // Atualizar texto
+                        listaCard.find('.text-muted.small').text(
+                            `${totalItens} total | ${porcentagemAPI}% concluído`
+                        );
+                        
+                        // Atualizar barra
+                        listaCard.find('.progress-bar').css('width', porcentagemAPI + '%');
+                        listaCard.find('.progress-bar').attr('aria-valuenow', porcentagemAPI);
+                    }
+                }
+                
+                // Atualizar contadores de prioridade se disponíveis na resposta
+                if (response.item && response.item.lista) {
+                    const lista = response.item.lista;
+                    if (lista.itens_alta_prioridade !== undefined) {
+                        atualizarContadorPrioridade(listaCard, 'alta', lista.itens_alta_prioridade);
+                    }
+                    if (lista.itens_media_prioridade !== undefined) {
+                        atualizarContadorPrioridade(listaCard, 'media', lista.itens_media_prioridade);
+                    }
+                    if (lista.itens_baixa_prioridade !== undefined) {
+                        atualizarContadorPrioridade(listaCard, 'baixa', lista.itens_baixa_prioridade);
+                    }
+                }
+                
+                // Atualizar o status da lista se necessário
+                const listaStatus = response.item?.lista?.status;
+                const listaStatusDisplay = response.item?.lista?.status_display;
+                
+                if (listaStatus) {
+                    // Remover as classes de status antigas
+                    listaCard.removeClass('em_andamento concluida pausada arquivada');
+                    
+                    // Adicionar a nova classe de status
+                    listaCard.addClass(listaStatus);
+                    
+                    // Atualizar o badge de status
+                    const statusBadge = listaCard.find('.badge-status.em_andamento, .badge-status.concluida, .badge-status.pausada, .badge-status.arquivada');
+                    statusBadge.removeClass('em_andamento concluida pausada arquivada');
+                    statusBadge.addClass(listaStatus);
+                    
+                    if (listaStatusDisplay) {
+                        statusBadge.text(listaStatusDisplay);
+                    }
+                    
+                    // Adicionar classe de animação se a lista foi concluída
+                    if (listaStatus === 'concluida' && !listaCard.hasClass('animation-played')) {
+                        listaCard.addClass('animation-played');
+                        listaCard.find('.progress-bar').addClass('progress-bar-animated bg-success');
+                        setTimeout(function() {
+                            listaCard.find('.progress-bar').removeClass('progress-bar-animated');
+                        }, 2000);
+                        
+                        // Atualizar o dashboard de manera interna
+                        atualizarDashboardStatsLocalmente();
+                    }
+                }
+                
+                // Mostrar mensagem de sucesso discretamente
+                showMessage('success', 'Item atualizado!', true);
+            },
+            error: function(error) {
+                console.error('DEBUG: Erro API', error);
+                
+                // Em caso de erro, reverter UI
+                itemElement.find('.item-checkbox').prop('checked', !concluido);
+                if (concluido) {
+                    itemElement.removeClass('concluido');
+                } else {
+                    itemElement.addClass('concluido');
+                }
+                
+                // Reverter a barra de progresso
+                atualizarProgressoLista(listaCard, !concluido, itemId);
+                
+                // Mostrar erro
+                showMessage('danger', 'Erro ao atualizar status do item.', true);
+            }
+        });
+    });
+    
+    // Função para atualizar contadores de prioridade
+    function atualizarContadorPrioridade(listaCard, prioridade, quantidade) {
+        let icone, cor, titulo;
+        
+        if (prioridade === 'alta') {
+            icone = 'fa-arrow-up';
+            cor = 'text-danger';
+            titulo = 'Itens de prioridade alta';
+        } else if (prioridade === 'media') {
+            icone = 'fa-equals';
+            cor = 'text-warning';
+            titulo = 'Itens de prioridade média';
+        } else {
+            icone = 'fa-arrow-down';
+            cor = 'text-success';
+            titulo = 'Itens de prioridade baixa';
+        }
+        
+        let elementoContador = listaCard.find(`.lista-card-footer span[title="${titulo}"]`);
+        
+        if (quantidade > 0) {
+            if (elementoContador.length === 0) {
+                elementoContador = $(`<span title="${titulo}"><i class="fas ${icone} ${cor} me-1"></i>${quantidade}</span>`);
+                listaCard.find('.d-flex.flex-wrap.gap-2').append(elementoContador);
+            } else {
+                elementoContador.html(`<i class="fas ${icone} ${cor} me-1"></i>${quantidade}`);
+            }
+        } else if (elementoContador.length > 0) {
+            elementoContador.remove();
+        }
+    }
+    
+    // Função para atualizar o dashboard localmente
+    function atualizarDashboardStatsLocalmente() {
+        console.log('DEBUG: atualizando dashboard estatísticas localmente');
+        
+        // Contar totais das listas
+        const totalListas = $('.lista-card').length;
+        const listasEmAndamento = $('.lista-card.em_andamento').length;
+        const listasConcluidas = $('.lista-card.concluida').length;
+        
+        // Atualizar os contadores no dashboard
+        $('.dashboard-card:eq(0) .stat-number').text(totalListas);
+        $('.dashboard-card:eq(1) .stat-number').text(listasEmAndamento);
+        $('.dashboard-card:eq(2) .stat-number').text(listasConcluidas);
+    }
+    
+    // Função para exibir mensagens
+    function showMessage(type, message, isCompact = false) {
+        console.log('DEBUG: showMessage chamada', {type, message, isCompact});
+        const alertClass = isCompact ? 'alert-compact' : '';
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show ${alertClass}" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            </div>
+        `;
+        
+        if (isCompact) {
+            // Remover alertas compactos existentes
+            $('.alert-compact').remove();
+            
+            // Adicionar o novo alerta compacto ao final do body
+            $('body').append(alertHtml);
+        } else {
+            // Inserir alerta no topo da página
+            $('.page-title').before(alertHtml);
+        }
+        
+        // Auto-remover após 3 segundos para mensagens compactas, 5 para as regulares
+        setTimeout(function() {
+            $('.alert' + (isCompact ? '.alert-compact' : '')).alert('close');
+        }, isCompact ? 3000 : 5000);
+    }
+    
+    // Ver lista completa
+    $('.view-lista').on('click', function(e) {
+        e.preventDefault();
+        const listaId = $(this).data('lista-id');
+        // Redirecionar para a página da lista
+        window.location.href = `/listas/${listaId}/`;
+    });
+    
+    // Editar lista
+    $('.edit-lista').on('click', function(e) {
+        e.preventDefault();
+        const listaId = $(this).data('lista-id');
+        // Abrir modal de edição ou redirecionar
+        alert('Funcionalidade para editar a lista ' + listaId + ' será implementada em breve!');
+    });
+    
+    // Excluir lista
+    $('.delete-lista').on('click', function(e) {
+        e.preventDefault();
+        const listaId = $(this).data('lista-id');
+        
+        if (confirm('Tem certeza que deseja excluir esta lista? Esta ação não pode ser desfeita.')) {
+            $.ajax({
+                url: `/api/listas/${listaId}/excluir/`,
+                type: 'POST',
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                },
+                success: function(response) {
+                    showMessage('success', 'Lista excluída com sucesso!');
+                    // Remover a lista da interface
+                    $(`[data-lista-id="${listaId}"]`).closest('.lista-card').fadeOut(300, function() {
+                        $(this).remove();
+                        
+                        // Se não houver mais listas, mostrar o estado vazio
+                        if ($('.lista-card').length === 0) {
+                            location.reload();
+                        } else {
+                            // Atualizar o dashboard
+                            atualizarDashboardStatsLocalmente();
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error('DEBUG: Erro ao excluir lista', error);
+                    showMessage('danger', 'Erro ao excluir lista. Tente novamente.');
+                }
+            });
+        }
+    });
+    
+    // Ajuste para melhorar a experiência em dispositivos móveis
+    function adjustForMobile() {
+        // Se a largura da tela for menor que 576px (dispositivos muito pequenos)
+        if (window.innerWidth < 576) {
+            // Reduzir o número de itens mostrados em cada lista
+            $('.lista-itens').each(function() {
+                const items = $(this).find('.lista-item');
+                items.each(function(index) {
+                    if (index > 1) { // Mostrar apenas os 2 primeiros itens em telas muito pequenas
+                        $(this).hide();
+                    }
+                });
+                
+                // Mostrar o botão "Ver todos" para listas com mais de 2 itens
+                if (items.length > 2) {
+                    // Se o botão "Ver todos" já não existir, adicione-o
+                    if ($(this).find('.btn-view-all').length === 0) {
+                        const listaId = $(this).closest('.lista-card').find('[data-lista-id]').first().data('lista-id');
+                        const totalItems = items.length;
+                        $(this).append(`
+                            <div class="text-center mt-2">
+                                <a href="#" class="btn btn-sm btn-outline-primary view-lista btn-view-all" data-lista-id="${listaId}">
+                                    Ver todos os ${totalItems} itens
+                                </a>
+                            </div>
+                        `);
+                    }
+                }
+            });
+        } else {
+            // Em telas maiores, mostrar até 3 itens conforme o design original
+            $('.lista-item').show();
+            $('.btn-view-all').parent().remove();
+        }
+    }
+    
+    // Executar o ajuste na inicialização
+    adjustForMobile();
+    
+    // Executar o ajuste quando a tela for redimensionada
+    $(window).on('resize', function() {
+        adjustForMobile();
+    });
+
+    // Adicionar item à lista
+    $('.add-item').on('click', function(e) {
+        e.preventDefault();
+        console.log('DEBUG: Botão add-item clicado');
+        const listaId = $(this).data('lista-id');
+        const listaNome = $(this).closest('.lista-card').find('.lista-title').text().trim();
+        
+        // Preencher o ID da lista no formulário e atualizar o título do modal
+        $('#id_item_lista').val(listaId);
+        $('#modalNovoItemLabel').html(`<i class="fas fa-plus-circle me-2"></i>Novo Item em "${listaNome}"`);
+        
+        // Resetar o formulário
+        $('#formNovoItem').trigger('reset');
+        
+        // Mostrar o modal
+        $('#modalNovoItem').modal('show');
+    });
+});
+
+// Função para adicionar um novo item à UI
+window.adicionarNovoItemNaUI = function(listaCard, item) {
+    console.log('DEBUG: adicionarNovoItemNaUI iniciada', { listaCard: listaCard.length, item: item });
+    
+    // Normalizar os dados de resposta para os valores esperados
+    item = {
+        id: item.id || 0,
+        nome: item.nome,
+        descricao: item.descricao || '',
+        prioridade: item.prioridade || 'media',
+        status: item.status || 'pendente',
+        data_hora: item.data_hora,
+        lista_id: item.lista_id || item.lista,
+        prioridade_display: item.prioridade_display || getPrioridadeDisplay(item.prioridade),
+        status_display: item.status_display || getStatusDisplay(item.status),
+        tempo_restante: item.tempo_restante || '',
+        esta_atrasado: item.esta_atrasado || false,
+        porcentagem_concluida_lista: item.porcentagem_concluida_lista || 0
+    };
+    
+    console.log('DEBUG: Item normalizado', item);
+
+    // Criar HTML para o novo item
+    const tempoRestante = item.tempo_restante || '';
+    const estaAtrasado = item.esta_atrasado ? 'overdue' : '';
+    const statusClass = item.status === 'concluido' ? 'concluido' : '';
+    const checkedAttr = item.status === 'concluido' ? 'checked' : '';
+    
+    const itemHTML = `
+        <div class="lista-item ${item.prioridade} ${statusClass} lista-item-new">
+            <input type="checkbox" class="item-checkbox" ${checkedAttr} data-item-id="${item.id}">
+            <div class="item-content">
+                <span class="item-nome">${item.nome}</span>
+                ${item.descricao ? `<p class="item-descricao">${item.descricao}</p>` : ''}
+                <div class="item-meta">
+                    <span class="item-badge badge-prioridade ${item.prioridade}">${item.prioridade_display}</span>
+                    ${item.status !== 'concluido' ? `<span class="item-badge badge-status">${item.status_display}</span>` : ''}
+                    ${item.data_hora ? `
+                        <span class="item-deadline ${estaAtrasado}">
+                            <i class="far ${estaAtrasado ? 'fa-clock' : 'fa-calendar-alt'} me-1"></i>
+                            ${tempoRestante}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    console.log('DEBUG: HTML do item criado');
+    
+    // Localizar onde inserir o novo item
+    const listaItens = listaCard.find('.lista-itens');
+    console.log('DEBUG: listaItens encontrada', listaItens.length);
+    
+    // Se não houver itens, remover a mensagem "nenhum item" e criar div para itens
+    if (listaItens.length === 0) {
+        console.log('DEBUG: Nenhum item encontrado, criando primeiro item');
+        // Remover a mensagem "Esta lista ainda não tem itens"
+        const emptyState = listaCard.find('.lista-card-body .text-center');
+        
+        if (emptyState.length > 0) {
+            emptyState.remove();
+            
+            // Criar a div para itens
+            listaCard.find('.lista-card-body').append(`
+                <div class="lista-itens">
+                    ${itemHTML}
+                </div>
+            `);
+            console.log('DEBUG: Div de itens criada e item adicionado');
+        }
+    } else {
+        // Adicionar o item à lista existente
+        listaItens.prepend(itemHTML);
+        console.log('DEBUG: Item adicionado à lista existente');
+        
+        // Limitar a 3 itens visíveis
+        const itens = listaItens.find('.lista-item');
+        console.log('DEBUG: Total de itens agora', itens.length);
+        
+        if (itens.length > 3) {
+            // Se já existe um botão "Ver todos", apenas atualize o número
+            const verTodosBtn = listaItens.find('.btn.view-lista');
+            if (verTodosBtn.length > 0) {
+                verTodosBtn.text(`Ver todos os ${itens.length} itens`);
+                console.log('DEBUG: Botão Ver todos atualizado');
+            } else {
+                // Esconder o item mais antigo e adicionar botão "Ver todos"
+                itens.eq(3).hide();
+                listaItens.append(`
+                    <div class="text-center mt-2">
+                        <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="${item.lista_id}">
+                            Ver todos os ${itens.length} itens
+                        </a>
+                    </div>
+                `);
+                console.log('DEBUG: Botão Ver todos criado');
+                
+                // Adicionar handler para o novo botão
+                listaItens.find('.btn.view-lista').on('click', function(e) {
+                    e.preventDefault();
+                    const listaId = $(this).data('lista-id');
+                    window.location.href = `/listas/${listaId}/`;
+                });
+            }
+        }
+    }
+    
+    // Atualizar a contagem de itens e a porcentagem
+    const infoText = listaCard.find('.text-muted.small');
+    const contagem = infoText.text().split('|')[0].trim();
+    const totalItens = parseInt(contagem.split(' ')[0]) + 1;
+    const porcentagemConcluida = item.porcentagem_concluida_lista || parseInt(infoText.text().split('|')[1].trim().split('%')[0]);
+    infoText.text(`${totalItens} total | ${porcentagemConcluida}% concluído`);
+    console.log('DEBUG: Contagem e porcentagem atualizadas', { totalItens, porcentagemConcluida });
+    
+    // Atualizar a barra de progresso com animação
+    const progressBar = listaCard.find('.progress-bar');
+    progressBar.css('width', porcentagemConcluida + '%');
+    progressBar.attr('aria-valuenow', porcentagemConcluida);
+    
+    // Adicionar classe de animação
+    progressBar.addClass('progress-bar-animated');
+    setTimeout(function() {
+        progressBar.removeClass('progress-bar-animated');
+    }, 1000);
+    console.log('DEBUG: Barra de progresso atualizada');
+    
+    // Atualizar contadores de prioridade
+    const prioridadeAjustada = item.prioridade === 'alta' ? 'alta' : 
+                              item.prioridade === 'media' ? 'media' : 'baixa';
+    
+    // Encontrar o contador específico
+    const contadorSelector = prioridadeAjustada === 'alta' ? 'Itens de prioridade alta' :
+                           prioridadeAjustada === 'media' ? 'Itens de prioridade média' : 'Itens de prioridade baixa';
+    
+    const contadorAtual = listaCard.find(`.lista-card-footer span[title="${contadorSelector}"]`);
+    
+    if (contadorAtual.length > 0) {
+        // Atualizar contador existente
+        const valorAtual = parseInt(contadorAtual.text().trim());
+        contadorAtual.html(`<i class="fas fa-${prioridadeAjustada === 'alta' ? 'arrow-up' : prioridadeAjustada === 'media' ? 'equals' : 'arrow-down'} text-${prioridadeAjustada === 'alta' ? 'danger' : prioridadeAjustada === 'media' ? 'warning' : 'success'} me-1"></i>${valorAtual + 1}`);
+        console.log('DEBUG: Contador existente atualizado', { prioridadeAjustada, novoValor: valorAtual + 1 });
+    } else {
+        // Criar novo contador
+        const novoContador = $(`<span title="${contadorSelector}"><i class="fas fa-${prioridadeAjustada === 'alta' ? 'arrow-up' : prioridadeAjustada === 'media' ? 'equals' : 'arrow-down'} text-${prioridadeAjustada === 'alta' ? 'danger' : prioridadeAjustada === 'media' ? 'warning' : 'success'} me-1"></i>1</span>`);
+        listaCard.find('.d-flex.flex-wrap.gap-2').append(novoContador);
+        console.log('DEBUG: Novo contador criado', { prioridadeAjustada });
+    }
+    
+    // Adicionar handler do checkbox ao novo item
+    const novoItem = listaCard.find(`.lista-item-new`);
+    novoItem.find('.item-checkbox').off('change').on('change', function() {
+        const itemId = $(this).data('item-id');
+        const concluido = $(this).prop('checked');
+        const novoStatus = concluido ? 'concluido' : 'pendente';
+        const itemElement = $(this).closest('.lista-item');
+        const listaCard = itemElement.closest('.lista-card');
+        
+        // Atualizar a classe do item imediatamente para feedback visual
+        if (concluido) {
+            itemElement.addClass('concluido');
+        } else {
+            itemElement.removeClass('concluido');
+        }
+        
+        // Atualizar barra de progresso imediatamente para feedback visual
+        const novaPortcentagem = atualizarProgressoLista(listaCard, concluido, itemId);
+        
+        // Enviar para a API
+        $.ajax({
+            url: `/api/itens/${itemId}/status/`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ status: novoStatus }),
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+            },
+            success: function(response) {
+                console.log('DEBUG: Item adicionado - atualização de status', response);
+                
+                // Mostrar mensagem de sucesso discretamente
+                showMessage('success', 'Item atualizado!', true);
+            },
+            error: function(error) {
+                console.error('DEBUG: Erro ao atualizar status do item novo', error);
+                // Reverter a mudança no checkbox e na classe em caso de erro
+                itemElement.find('.item-checkbox').prop('checked', !concluido);
+                if (concluido) {
+                    itemElement.removeClass('concluido');
+                } else {
+                    itemElement.addClass('concluido');
+                }
+                
+                // Reverter a barra de progresso
+                atualizarProgressoLista(listaCard, !concluido, itemId);
+                
+                showMessage('danger', 'Erro ao atualizar status do item.');
+            }
+        });
+    });
+    
+    console.log('DEBUG: Handler do checkbox adicionado');
+    
+    // Remover a classe lista-item-new após a animação
+    setTimeout(function() {
+        novoItem.removeClass('lista-item-new');
+    }, 2000);
+    
+    // Atualizar estatísticas do dashboard localmente
+    atualizarDashboardStatsLocalmente();
+    
+    console.log('DEBUG: adicionarNovoItemNaUI concluída com sucesso');
+};
+
+// Funções auxiliares para normalização de dados
+function getPrioridadeDisplay(prioridade) {
+    switch (prioridade) {
+        case 'alta': return 'Alta';
+        case 'media': return 'Média';
+        case 'baixa': return 'Baixa';
+        default: return 'Média';
+    }
+}
+
+function getStatusDisplay(status) {
+    switch (status) {
+        case 'pendente': return 'Pendente';
+        case 'em_andamento': return 'Em andamento';
+        case 'concluido': return 'Concluído';
+        case 'adiado': return 'Adiado';
+        case 'cancelado': return 'Cancelado';
+        default: return 'Pendente';
+    }
+}
+</script>

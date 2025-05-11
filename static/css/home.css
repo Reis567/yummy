@@ -495,8 +495,8 @@
 
 .lista-card .item-checkbox {
     margin-right: 0.75rem;
-    width: 16px;
-    height: 16px;
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
     margin-top: 0.25rem;
 }
@@ -578,8 +578,8 @@
     }
     
     .lista-card .item-checkbox {
-        width: 18px;
-        height: 18px;
+        width: 28px;
+        height: 28px;
     }
     
     .lista-card .item-nome {
@@ -635,4 +635,133 @@
     margin-right: 0.3rem;
     width: 16px;
     text-align: center;
+}
+
+/* Estilos melhorados para o checkbox */
+.lista-item {
+    position: relative;
+    padding-right: 40px; /* Espaço para o checkbox */
+}
+
+.item-checkbox {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: white;
+    border: 2px solid var(--accent-color);
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+.item-checkbox:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.item-checkbox:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 18px;
+}
+
+.item-checkbox:hover {
+    box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+/* Adicione uma variável CSS para a cor de destaque em formato RGB */
+:root {
+    --accent-color-rgb: 249, 162, 123; /* Equivalente a #F9A27B */
+}
+
+/* Mensagens de notificação compactas */
+.alert-compact {
+    padding: 0.5rem 1rem;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Ajustes para telas maiores */
+@media (min-width: 768px) {
+    .item-checkbox {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .item-checkbox:checked::after {
+        font-size: 30px;
+    }
+}
+
+/* Animações para atualização da progress bar */
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-bar-animated {
+  animation: progress-bar-stripes 1s linear infinite;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+}
+
+@keyframes progress-bar-stripes {
+  0% { background-position-x: 1rem; }
+}
+
+.bg-success {
+  background-color: var(--success-color) !important;
+}
+
+/* Animação para novos itens e itens alterados */
+.lista-item-new,
+.lista-item-updated {
+  animation: highlight-change 2s ease-out;
+}
+
+@keyframes highlight-change {
+  0% { background-color: rgba(var(--accent-color-rgb), 0.2); }
+  100% { background-color: white; }
+}
+
+/* Flash de destaque para barra de progresso */
+.progress-flash {
+  animation: progress-flash 0.5s ease-out;
+}
+
+@keyframes progress-flash {
+  0% { box-shadow: 0 0 5px var(--accent-color); }
+  100% { box-shadow: none; }
+}
+
+/* Assegure que temos a variável de cor em formato RGB */
+:root {
+  --accent-color-rgb: 249, 162, 123; /* Ajuste para corresponder à sua cor de destaque */
 }

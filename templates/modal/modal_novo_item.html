@@ -95,26 +95,30 @@
         // Executar ajuste quando o modal for aberto
         $('#modalNovoItem').on('shown.bs.modal', function () {
             adjustModalForMobile();
+            console.log('DEBUG: Modal aberto e ajustado para mobile se necessário');
         });
         
         // Também ajustar quando a janela for redimensionada
         window.addEventListener('resize', adjustModalForMobile);
         
-        // Handler para o formulário de novo item
-        $('#formNovoItem').on('submit', function(e) {
+        // Substituir o handler de envio do formulário de novo item
+        $('#formNovoItem').off('submit').on('submit', function(e) {
             e.preventDefault();
+            console.log('DEBUG: Handler de submit do formNovoItem acionado');
             
             // Obter dados do formulário
             const formData = {
                 lista: $('#id_item_lista').val(),
                 nome: $('#id_item_nome').val(),
-                descricao: $('#id_item_descricao').val(),
+                descricao: $('#id_item_descricao').val() || '',
                 data_hora: $('#id_item_data_hora').val() || null,
                 prioridade: $('#id_item_prioridade').val(),
                 status: $('#id_item_status').val(),
-                notas: $('#id_item_notas').val() || null,
+                notas: $('#id_item_notas').val() || '',
                 ordem: 0 // A ordem será ajustada automaticamente
             };
+            
+            console.log('DEBUG: Dados do formulário:', formData);
             
             // Enviar para a API
             $.ajax({
@@ -126,24 +130,67 @@
                     xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
                 },
                 success: function(response) {
+                    console.log('DEBUG: Resposta da API bem-sucedida', response);
+                    
                     // Fechar o modal
                     $('#modalNovoItem').modal('hide');
                     
-                    // Exibir mensagem de sucesso
-                    showMessage('success', 'Item criado com sucesso!');
+                    // Encontrar a lista onde o item deve ser adicionado
+                    const listaCard = $(`.lista-card:has([data-lista-id="${formData.lista}"])`);
+                    console.log('DEBUG: listaCard encontrado', listaCard.length);
                     
-                    // Recarregar a página para mostrar o novo item
-                    setTimeout(function() {
+                    if (listaCard.length > 0) {
+                        // Combinar dados do formulário com a resposta da API
+                        let itemData;
+                        
+                        // Verificar se a resposta contém um item
+                        if (response.item) {
+                            // Usar o item da resposta
+                            itemData = response.item;
+                            // Adicionar campos do formulário que podem não estar na resposta
+                            if (!itemData.descricao) itemData.descricao = formData.descricao;
+                            if (!itemData.lista_id) itemData.lista_id = formData.lista;
+                        } else {
+                            // Se não houver item na resposta, usar os dados do formulário
+                            itemData = formData;
+                            // Adicionar o ID do novo item se estiver disponível na resposta
+                            if (response.id) itemData.id = response.id;
+                        }
+                        
+                        // Adicionar o novo item à lista
+                        if (typeof window.adicionarNovoItemNaUI === 'function') {
+                            window.adicionarNovoItemNaUI(listaCard, itemData);
+                        } else {
+                            console.error('DEBUG: Função adicionarNovoItemNaUI não encontrada');
+                            alert('Erro: Função adicionarNovoItemNaUI não encontrada. Recarregando a página...');
+                            location.reload();
+                        }
+                        
+                        // Exibir mensagem de sucesso
+                        if (typeof window.showMessage === 'function') {
+                            window.showMessage('success', 'Item criado com sucesso!', true);
+                        } else {
+                            console.warn('DEBUG: Função showMessage não encontrada');
+                            alert('Item criado com sucesso!');
+                        }
+                    } else {
+                        console.error('DEBUG: Não foi possível encontrar a lista para adicionar o item');
+                        alert('Erro: Lista não encontrada. Recarregando a página...');
                         location.reload();
-                    }, 1000);
+                    }
                 },
                 error: function(xhr) {
+                    console.error('DEBUG: Erro na resposta da API', xhr);
                     // Exibir mensagem de erro
                     const response = xhr.responseJSON;
-                    showMessage('danger', response.message || 'Erro ao criar item. Tente novamente.');
+                    if (typeof window.showMessage === 'function') {
+                        window.showMessage('danger', response?.message || 'Erro ao criar item. Tente novamente.');
+                    } else {
+                        alert('Erro ao criar item: ' + (response?.message || 'Tente novamente.'));
+                    }
                     
                     // Exibir erros de validação no formulário
-                    if (response.errors) {
+                    if (response && response.errors) {
                         showFormErrorsItem(response.errors);
                     }
                 }
