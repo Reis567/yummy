@@ -135,7 +135,7 @@
             </div>
                 {% if lista.itens.count > 0 %}
                     <div class="lista-itens">
-                        {% for item in lista.itens.all|slice:":3" %}
+                        {% for item in lista.itens.all %}
                             <div class="lista-item {{ item.prioridade }} {% if item.status == 'concluido' %}concluido{% endif %}">
                                 <input type="checkbox" class="item-checkbox" {% if item.status == 'concluido' %}checked{% endif %} data-item-id="{{ item.id }}">
                                 <div class="item-content">
@@ -159,13 +159,7 @@
                             </div>
                         {% endfor %}
                         
-                        {% if lista.itens.count > 3 %}
-                            <div class="text-center mt-2">
-                                <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="{{ lista.id }}">
-                                    Ver todos os {{ lista.itens.count }} itens
-                                </a>
-                            </div>
-                        {% endif %}
+
                     </div>
                 {% else %}
                     <div class="text-center py-3">
