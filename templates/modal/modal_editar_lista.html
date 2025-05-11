@@ -1,0 +1,409 @@
+<!-- Modal Editar Lista -->
+<div class="modal fade" id="modalEditarLista" tabindex="-1" aria-labelledby="modalEditarListaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarListaLabel"><i class="fas fa-edit me-2"></i>Editar Lista</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarLista">
+                    <input type="hidden" id="editar_lista_id" name="id">
+                    
+                    <div class="mb-3">
+                        <label for="editar_lista_nome" class="form-label">Nome da Lista</label>
+                        <input type="text" class="form-control" id="editar_lista_nome" name="nome" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editar_lista_objetivo" class="form-label">Objetivo (opcional)</label>
+                        <textarea class="form-control" id="editar_lista_objetivo" name="objetivo" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editar_lista_status" class="form-label">Status</label>
+                        <select class="form-select" id="editar_lista_status" name="status">
+                            <option value="pendente">Pendente</option>
+                            <option value="em_andamento">Em andamento</option>
+                            <option value="concluida">Concluída</option>
+                            <option value="pausada">Pausada</option>
+                            <option value="arquivada">Arquivada</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editar_lista_data_objetivo" class="form-label">Data objetivo (opcional)</label>
+                        <input type="date" class="form-control" id="editar_lista_data_objetivo" name="data_objetivo">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ícone</label>
+                        <div class="icon-picker">
+                            <div class="icon-option" data-icon="fas fa-list"><i class="fas fa-list"></i></div>
+                            <div class="icon-option" data-icon="fas fa-shopping-cart"><i class="fas fa-shopping-cart"></i></div>
+                            <div class="icon-option" data-icon="fas fa-tasks"><i class="fas fa-tasks"></i></div>
+                            <div class="icon-option" data-icon="fas fa-clipboard-list"><i class="fas fa-clipboard-list"></i></div>
+                            <div class="icon-option" data-icon="fas fa-shopping-basket"><i class="fas fa-shopping-basket"></i></div>
+                            <div class="icon-option" data-icon="fas fa-gift"><i class="fas fa-gift"></i></div>
+                            <div class="icon-option" data-icon="fas fa-home"><i class="fas fa-home"></i></div>
+                            <div class="icon-option" data-icon="fas fa-star"><i class="fas fa-star"></i></div>
+                        </div>
+                        <input type="hidden" id="editar_lista_icone" name="icone" value="fas fa-list">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Cor</label>
+                        <div class="color-picker">
+                            <div class="color-option" style="background-color: #F9A27B;" data-color="#F9A27B"></div>
+                            <div class="color-option" style="background-color: #FF6347;" data-color="#FF6347"></div>
+                            <div class="color-option" style="background-color: #FFB74D;" data-color="#FFB74D"></div>
+                            <div class="color-option" style="background-color: #8BC34A;" data-color="#8BC34A"></div>
+                            <div class="color-option" style="background-color: #4CAF50;" data-color="#4CAF50"></div>
+                            <div class="color-option" style="background-color: #03A9F4;" data-color="#03A9F4"></div>
+                            <div class="color-option" style="background-color: #9C27B0;" data-color="#9C27B0"></div>
+                            <div class="color-option" style="background-color: #E91E63;" data-color="#E91E63"></div>
+                        </div>
+                        <input type="hidden" id="editar_lista_cor" name="cor" value="#F9A27B">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="salvarEdicaoLista">Salvar alterações</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+
+// Implementar edição de lista
+$(document).on('click', '.edit-lista', function(e) {
+    e.preventDefault();
+    
+    // Fechar menu de opções
+    $('.lista-action-menu.show').removeClass('show');
+    
+    const listaId = $(this).data('lista-id');
+    const listaCard = $(this).closest('.lista-card');
+    
+    // Preencher o formulário com os dados atuais da lista
+    $('#editar_lista_id').val(listaId);
+    $('#editar_lista_nome').val(listaCard.find('.lista-title').text().trim());
+    $('#editar_lista_objetivo').val(listaCard.find('.lista-objetivo').text().trim());
+    $('#editar_lista_status').val(listaCard.attr('class').split(' ').find(cls => ['pendente', 'em_andamento', 'concluida', 'pausada', 'arquivada'].includes(cls)));
+    
+    // Data objetivo (se existir)
+    const dataObjetivoText = listaCard.find('.lista-meta span:contains("dias restantes")').text();
+    if (dataObjetivoText) {
+        // Aqui precisaríamos calcular a data objetivo a partir dos dias restantes
+        // Como é complexo, você pode adicionar um atributo data-data-objetivo ao elemento HTML
+        // Para simplificar, deixamos em branco por enquanto
+        $('#editar_lista_data_objetivo').val('');
+    } else {
+        $('#editar_lista_data_objetivo').val('');
+    }
+    
+    // Ícone atual
+    const iconeClass = listaCard.find('.lista-icon i').attr('class');
+    $('#editar_lista_icone').val(iconeClass);
+    $('.icon-option').removeClass('selected');
+    $(`.icon-option[data-icon="${iconeClass}"]`).addClass('selected');
+    
+    // Cor atual (você precisa ter o valor da cor armazenado)
+    // Para simplificar, deixamos o padrão
+    $('.color-option').removeClass('selected');
+    $('.color-option:first').addClass('selected');
+    $('#editar_lista_cor').val($('.color-option:first').data('color'));
+    
+    // Abrir o modal
+    const editarListaModal = new bootstrap.Modal(document.getElementById('modalEditarLista'));
+    editarListaModal.show();
+});
+
+// Seleção de ícone no modal de edição
+$(document).on('click', '.icon-option', function() {
+    $('.icon-option').removeClass('selected');
+    $(this).addClass('selected');
+    $('#editar_lista_icone').val($(this).data('icon'));
+});
+
+// Seleção de cor no modal de edição
+$(document).on('click', '.color-option', function() {
+    $('.color-option').removeClass('selected');
+    $(this).addClass('selected');
+    $('#editar_lista_cor').val($(this).data('color'));
+});
+
+// Salvar edição da lista
+$(document).on('click', '#salvarEdicaoLista', function() {
+    const listaId = $('#editar_lista_id').val();
+    const formData = {
+        nome: $('#editar_lista_nome').val(),
+        objetivo: $('#editar_lista_objetivo').val(),
+        status: $('#editar_lista_status').val(),
+        data_objetivo: $('#editar_lista_data_objetivo').val(),
+        icone: $('#editar_lista_icone').val(),
+        cor: $('#editar_lista_cor').val()
+    };
+    
+    // Verificar se o nome está preenchido
+    if (!formData.nome) {
+        showMessage('danger', 'O nome da lista é obrigatório!', true);
+        return;
+    }
+    
+    // Enviar para a API
+    $.ajax({
+        url: `/api/listas/${listaId}/atualizar/`,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+        },
+        success: function(response) {
+            // Atualizar a lista na interface
+            const listaCard = $(`.lista-card:has([data-lista-id="${listaId}"])`);
+            
+            // Atualizar título, objetivo, ícone
+            listaCard.find('.lista-title').text(formData.nome);
+            
+            if (formData.objetivo) {
+                if (listaCard.find('.lista-objetivo').length) {
+                    listaCard.find('.lista-objetivo').text(formData.objetivo);
+                } else {
+                    listaCard.find('.lista-title').after(`<p class="lista-objetivo">${formData.objetivo}</p>`);
+                }
+            } else {
+                listaCard.find('.lista-objetivo').remove();
+            }
+            
+            // Atualizar ícone
+            listaCard.find('.lista-icon i').attr('class', formData.icone);
+            
+            // Atualizar status
+            listaCard.removeClass('pendente em_andamento concluida pausada arquivada');
+            listaCard.addClass(formData.status);
+            
+            const statusBadge = listaCard.find('.badge-status');
+            statusBadge.removeClass('pendente em_andamento concluida pausada arquivada');
+            statusBadge.addClass(formData.status);
+            statusBadge.text(response.lista.status_display);
+            
+            // Atualizar cores (você precisa implementar a lógica para usar a cor escolhida)
+            
+            // Fechar o modal
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarLista')).hide();
+            
+            // Mostrar mensagem de sucesso
+            showMessage('success', 'Lista atualizada com sucesso!', true);
+            
+            // Atualizar o dashboard localmente, se necessário
+            if (formData.status === 'concluida' || formData.status === 'em_andamento') {
+                atualizarDashboardStatsLocalmente();
+            }
+        },
+        error: function(error) {
+            console.error('DEBUG: Erro ao atualizar lista', error);
+            
+            // Mostrar mensagem de erro
+            let errorMessage = 'Erro ao atualizar a lista. Tente novamente.';
+            
+            if (error.responseJSON && error.responseJSON.errors) {
+                // Formatar erros específicos do formulário
+                const errors = error.responseJSON.errors;
+                errorMessage = Object.keys(errors).map(key => `${key}: ${errors[key]}`).join('<br>');
+            }
+            
+            showMessage('danger', errorMessage, true);
+        }
+    });
+});
+
+// Implementar mudança de status
+$(document).on('click', '.change-status', function(e) {
+    e.preventDefault();
+    
+    // Fechar menu de opções
+    $('.lista-action-menu.show').removeClass('show');
+    
+    const listaId = $(this).data('lista-id');
+    const listaCard = $(this).closest('.lista-card');
+    const statusAtual = listaCard.attr('class').split(' ').find(cls => ['pendente', 'em_andamento', 'concluida', 'pausada', 'arquivada'].includes(cls));
+    
+    // Lista de status disponíveis e seus nomes de exibição
+    const statusOptions = [
+        { value: 'pendente', label: 'Pendente' },
+        { value: 'em_andamento', label: 'Em andamento' },
+        { value: 'concluida', label: 'Concluída' },
+        { value: 'pausada', label: 'Pausada' },
+        { value: 'arquivada', label: 'Arquivada' }
+    ];
+    
+    // Criar HTML para opções de status
+    let optionsHtml = '';
+    statusOptions.forEach(status => {
+        if (status.value !== statusAtual) {
+            optionsHtml += `
+                <button type="button" class="btn-action change-status-option" data-status="${status.value}">
+                    <i class="fas fa-circle me-2 status-${status.value}"></i>${status.label}
+                </button>
+            `;
+        }
+    });
+    
+    // Criar popup de seleção de status
+    const popupHtml = `
+        <div class="status-popup">
+            <div class="status-popup-header">
+                <h5>Mudar status para:</h5>
+                <button type="button" class="btn-close" aria-label="Fechar"></button>
+            </div>
+            <div class="status-popup-body">
+                ${optionsHtml}
+            </div>
+        </div>
+    `;
+    
+    // Remover outros popups abertos
+    $('.status-popup').remove();
+    
+    // Adicionar popup à lista
+    listaCard.append(popupHtml);
+    
+    // Adicionar evento para fechar o popup
+    listaCard.find('.status-popup .btn-close').on('click', function() {
+        listaCard.find('.status-popup').remove();
+    });
+    
+    // Adicionar evento para mudança de status
+    listaCard.find('.change-status-option').on('click', function() {
+        const novoStatus = $(this).data('status');
+        
+        // Enviar para a API
+        $.ajax({
+            url: `/api/listas/${listaId}/atualizar/`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ status: novoStatus }),
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+            },
+            success: function(response) {
+                // Atualizar status na interface
+                listaCard.removeClass('pendente em_andamento concluida pausada arquivada');
+                listaCard.addClass(novoStatus);
+                
+                const statusBadge = listaCard.find('.badge-status');
+                statusBadge.removeClass('pendente em_andamento concluida pausada arquivada');
+                statusBadge.addClass(novoStatus);
+                statusBadge.text(response.lista.status_display);
+                
+                // Fechar o popup
+                listaCard.find('.status-popup').remove();
+                
+                // Mostrar mensagem de sucesso
+                showMessage('success', 'Status da lista atualizado com sucesso!', true);
+                
+                // Atualizar o dashboard localmente
+                atualizarDashboardStatsLocalmente();
+            },
+            error: function(error) {
+                console.error('DEBUG: Erro ao atualizar status da lista', error);
+                
+                // Mostrar mensagem de erro
+                showMessage('danger', 'Erro ao atualizar o status da lista. Tente novamente.', true);
+            }
+        });
+    });
+});
+
+// Adicionar CSS para o popup de status
+$(document).ready(function() {
+    $('head').append(`
+        <style>
+            .status-popup {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: white;
+                border-radius: 0.5rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                z-index: 10;
+                overflow: hidden;
+                min-width: 220px;
+                max-width: 90%;
+            }
+            .status-popup-header {
+                padding: 0.75rem 1rem;
+                background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+                color: white;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .status-popup-header h5 {
+                margin: 0;
+                font-size: 1rem;
+            }
+            .status-popup-header .btn-close {
+                font-size: 0.75rem;
+            }
+            .status-popup-body {
+                padding: 0.5rem;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .status-pendente { color: var(--text-muted); }
+            .status-em_andamento { color: var(--warning-color); }
+            .status-concluida { color: var(--success-color); }
+            .status-pausada { color: var(--text-dark); }
+            .status-arquivada { color: var(--text-muted); }
+        </style>
+    `);
+});
+</script>
+<style>
+        .status-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            overflow: hidden;
+            min-width: 220px;
+            max-width: 90%;
+        }
+        .status-popup-header {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-popup-header h5 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .status-popup-header .btn-close {
+            font-size: 0.75rem;
+        }
+        .status-popup-body {
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-pendente { color: var(--text-muted); }
+        .status-em_andamento { color: var(--warning-color); }
+        .status-concluida { color: var(--success-color); }
+        .status-pausada { color: var(--text-dark); }
+        .status-arquivada { color: var(--text-muted); }
+</style>

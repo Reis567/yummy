@@ -1,15 +1,4 @@
 <script>
-/**
- * js_home.html - Script para funcionalidades da página home
- * Versão: 2.0
- * - Atualizado com melhorias para interações mobile
- * - Adicionado suporte para swipe bidirecional (esquerda para remover, direita para marcar)
- * - Melhorias visuais para feedback de ações
- */
-
-/**
- * Funções auxiliares
- */
 
 // Função para mostrar mensagens toast
 function showMessage(type, message, isCompact = false) {
@@ -646,7 +635,7 @@ $(document).ready(function() {
     
     // Função para resetar o swipe
     function resetSwipe(item) {
-// Animação suave de retorno
+
         item.css('transition', 'transform 0.3s ease-out, background-color 0.3s ease-out');
         item.css('transform', '');
         item.css('background-color', '');
@@ -1055,13 +1044,7 @@ $(document).ready(function() {
         window.location.href = `/listas/${listaId}/`;
     });
     
-    // Editar lista
-    $('.edit-lista').on('click', function(e) {
-        e.preventDefault();
-        const listaId = $(this).data('lista-id');
-        // Abrir modal de edição ou redirecionar
-        alert('Funcionalidade para editar a lista ' + listaId + ' será implementada em breve!');
-    });
+
     
     // Excluir lista
     $('.delete-lista').on('click', function(e) {
@@ -1113,6 +1096,24 @@ $(document).ready(function() {
         
         // Mostrar o modal
         $('#modalNovoItem').modal('show');
+    });
+    // Manipulação do menu de opções de lista
+    $(document).on('click', '.lista-more-actions', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Fechar todos os outros menus abertos
+        $('.lista-action-menu.show').not($(this).closest('.lista-card').find('.lista-action-menu')).removeClass('show');
+        
+        // Alternar o menu atual
+        $(this).closest('.lista-card').find('.lista-action-menu').toggleClass('show');
+    });
+
+    // Fechar menu ao clicar fora
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.lista-more-actions').length && !$(e.target).closest('.lista-action-menu').length) {
+            $('.lista-action-menu.show').removeClass('show');
+        }
     });
     
     // Executar o ajuste para dispositivos móveis na inicialização

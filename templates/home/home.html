@@ -73,56 +73,52 @@
       {% for lista in listas %}
       <div class="lista-card {{ lista.status }}">
          <div class="lista-card-header">
-            <div class="d-flex">
+            <div class="d-flex align-items-start">
                <div class="lista-icon me-2 me-md-3">
                   <i class="{{ lista.icone }}"></i>
                </div>
-               <div class="pe-5">
-                  <!-- Adicionado padding-right para evitar sobreposição com os botões -->
+               <div class="pe-4"> <!-- Reduzi o padding para evitar sobreposição -->
                   <h3 class="lista-title">{{ lista.nome }}</h3>
                   {% if lista.objetivo %}
                   <p class="lista-objetivo">{{ lista.objetivo }}</p>
                   {% endif %}
                   <div class="lista-meta">
                      <span>
-                     <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
+                        <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
                      </span>
                      {% if lista.data_objetivo %}
                      <span>
-                     <i class="fas fa-hourglass-half me-1"></i> 
-                     {% if lista.dias_restantes < 0 %}
-                     <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
-                     {% elif lista.dias_restantes == 0 %}
-                     <span class="text-warning">Vence hoje</span>
-                     {% else %}
-                     <span>{{ lista.dias_restantes }} dias restantes</span>
-                     {% endif %}
+                        <i class="fas fa-hourglass-half me-1"></i> 
+                        {% if lista.dias_restantes < 0 %}
+                        <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
+                        {% elif lista.dias_restantes == 0 %}
+                        <span class="text-warning">Vence hoje</span>
+                        {% else %}
+                        <span>{{ lista.dias_restantes }} dias restantes</span>
+                        {% endif %}
                      </span>
                      {% endif %}
                      <span class="badge badge-status {{ lista.status }}">{{ lista.get_status_display }}</span>
                   </div>
                </div>
-            </div>
-            <div class="lista-actions">
-               <a href="#" class="btn-icon view-lista" data-lista-id="{{ lista.id }}" title="Ver detalhes">
-               <i class="fas fa-eye"></i>
-               </a>
-               <a href="#" class="btn-icon edit-lista" data-lista-id="{{ lista.id }}" title="Editar lista">
-               <i class="fas fa-edit"></i>
-               </a>
-               <div class="dropdown d-inline-block">
-                  <button class="btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
-                  <i class="fas fa-ellipsis-v"></i>
+               <!-- Botão Adicionar Item e Menu Dropdown no topo direito -->
+               <div class="lista-actions">
+                  <button class="btn-icon add-item" data-lista-id="{{ lista.id }}" title="Adicionar item">
+                     <i class="fas fa-plus"></i>
                   </button>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                     <li><a class="dropdown-item add-item" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-plus me-2"></i> Adicionar item</a></li>
-                     <li><a class="dropdown-item change-status" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-sync-alt me-2"></i> Mudar status</a></li>
-                     <li>
-                        <hr class="dropdown-divider">
-                     </li>
-                     <li><a class="dropdown-item delete-lista text-danger" href="#" data-lista-id="{{ lista.id }}"><i class="fas fa-trash me-2"></i> Excluir lista</a></li>
-                  </ul>
+                  <button class="btn-icon lista-more-actions" type="button" title="Mais opções">
+                     <i class="fas fa-ellipsis-v"></i>
+                  </button>
                </div>
+            </div>
+            <!-- Menu de opções que aparece ao clicar no botão de mais opções -->
+            <div class="lista-action-menu">
+               <button class="btn-action edit-lista" data-lista-id="{{ lista.id }}">
+                  <i class="fas fa-edit me-2"></i>Editar lista
+               </button>
+               <button class="btn-action change-status" data-lista-id="{{ lista.id }}">
+                  <i class="fas fa-sync-alt me-2"></i>Mudar status
+               </button>
             </div>
          </div>
          <div class="lista-card-body">
@@ -183,25 +179,26 @@
                   <!-- Itens de prioridade alta -->
                   {% if lista.itens_alta_prioridade > 0 %}
                   <span title="Itens de prioridade alta">
-                  <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens_alta_prioridade }}
+                     <i class="fas fa-arrow-up text-danger me-1"></i>{{ lista.itens_alta_prioridade }}
                   </span>
                   {% endif %}
                   <!-- Itens de prioridade média -->
                   {% if lista.itens_media_prioridade > 0 %}
                   <span title="Itens de prioridade média">
-                  <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens_media_prioridade }}
+                     <i class="fas fa-equals text-warning me-1"></i>{{ lista.itens_media_prioridade }}
                   </span>
                   {% endif %}
                   <!-- Itens de prioridade baixa -->
                   {% if lista.itens_baixa_prioridade > 0 %}
                   <span title="Itens de prioridade baixa">
-                  <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens_baixa_prioridade }}
+                     <i class="fas fa-arrow-down text-success me-1"></i>{{ lista.itens_baixa_prioridade }}
                   </span>
                   {% endif %}
                </div>
-               <a href="#" class="btn btn-sm btn-primary view-lista" data-lista-id="{{ lista.id }}">
-               <i class="fas fa-eye me-1"></i> Ver Lista
-               </a>
+               <!-- Botão excluir lista no canto inferior direito -->
+               <button class="btn btn-sm btn-outline-danger delete-lista" data-lista-id="{{ lista.id }}">
+                  <i class="fas fa-trash me-1"></i>Excluir
+               </button>
             </div>
          </div>
       </div>
@@ -221,8 +218,10 @@
 
 
 <!--IMPORT DE MODAIS-->
+{% include "modal/modal_editar_lista.html" %}
 {% include "modal/modal_novo_item.html" %}
 {% include "modal/modal_nova_lista.html" %}
+
 
 {% endblock %}
 
