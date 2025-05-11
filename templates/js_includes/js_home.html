@@ -1,15 +1,50 @@
 <script>
-// Função para atualizar a barra de progresso e porcentagem
-function atualizarProgressoLista(listaCard, concluido, itemId) {
-    console.log('DEBUG: atualizarProgressoLista iniciada', { listaCard: listaCard.length, concluido, itemId });
+/**
+ * js_home.html - Script para funcionalidades da página home
+ * Versão: 2.0
+ * - Atualizado com melhorias para interações mobile
+ * - Adicionado suporte para swipe bidirecional (esquerda para remover, direita para marcar)
+ * - Melhorias visuais para feedback de ações
+ */
+
+/**
+ * Funções auxiliares
+ */
+
+// Função para mostrar mensagens toast
+function showMessage(type, message, isCompact = false) {
+    console.log('DEBUG: showMessage chamada', {type, message, isCompact});
+    const alertClass = isCompact ? 'alert-compact' : '';
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show ${alertClass}" role="alert">
+            ${message}
+        </div>
+    `;
     
+    if (isCompact) {
+        // Remover alertas compactos existentes
+        $('.alert-compact').remove();
+        
+        // Adicionar o novo alerta compacto ao final do body
+        $('body').append(alertHtml);
+    } else {
+        // Inserir alerta no topo da página
+        $('.page-title').before(alertHtml);
+    }
+    
+    // Auto-remover após 3 segundos para mensagens compactas, 5 para as regulares
+    setTimeout(function() {
+        $('.alert' + (isCompact ? '.alert-compact' : '')).alert('close');
+    }, isCompact ? 3000 : 5000);
+}
+
+// Atualiza a barra de progresso e porcentagem de itens concluídos
+function atualizarProgressoLista(listaCard, concluido, itemId) {
     // Obter valores atuais para cálculo
     const infoText = listaCard.find('.text-muted.small');
     const textoAtual = infoText.text();
     const totalItens = parseInt(textoAtual.split('|')[0].trim().split(' ')[0]);
     let percentualAtual = parseInt(textoAtual.split('|')[1].trim().split('%')[0]);
-    
-    console.log('DEBUG: Valores atuais:', { totalItens, percentualAtual, textoAtual });
     
     // Calcular nova porcentagem com base na ação (marcar/desmarcar)
     let novaPortcentagem;
@@ -21,16 +56,11 @@ function atualizarProgressoLista(listaCard, concluido, itemId) {
         novaPortcentagem = Math.max(0, percentualAtual - Math.round(100 / totalItens));
     }
     
-    console.log('DEBUG: Nova porcentagem calculada:', novaPortcentagem);
-    
     // Atualizar texto de porcentagem
     infoText.text(`${totalItens} total | ${novaPortcentagem}% concluído`);
     
     // Selecionar e atualizar a barra de progresso
     const progressBar = listaCard.find('.progress-bar');
-    
-    // Verificar se encontrou a barra de progresso
-    console.log('DEBUG: Progress bar encontrada:', progressBar.length);
     
     // Atualização visual com animação
     progressBar.css('width', novaPortcentagem + '%');
@@ -52,16 +82,13 @@ function atualizarProgressoLista(listaCard, concluido, itemId) {
     return novaPortcentagem;
 }
 
-// Função para remover um item
+// Remove um item da lista via API e atualiza a UI
 function removerItem(itemId, element) {
-    console.log('DEBUG: removerItem iniciada', { itemId });
-    
     // Adicionar classe de animação de remoção
     $(element).addClass('removing-item');
     
     // Obter a lista-card pai para atualização posterior
     const listaCard = $(element).closest('.lista-card');
-    const listaId = listaCard.find('[data-lista-id]').first().data('lista-id');
     
     // Fazer a chamada para a API de exclusão
     $.ajax({
@@ -71,8 +98,6 @@ function removerItem(itemId, element) {
             xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
         },
         success: function(response) {
-            console.log('DEBUG: Item removido com sucesso', response);
-            
             // Após a animação, remover o elemento do DOM
             setTimeout(() => {
                 $(element).remove();
@@ -96,7 +121,7 @@ function removerItem(itemId, element) {
     });
 }
 
-// Função para atualizar metadados da lista após remoção de um item
+// Atualiza os metadados da lista após alterações
 function atualizarMetadadosLista(listaCard) {
     // Contar total de itens
     const totalItens = listaCard.find('.lista-item').length;
@@ -164,7 +189,7 @@ function atualizarMetadadosLista(listaCard) {
     atualizarContadoresPrioridade(listaCard);
 }
 
-// Função para atualizar contadores de prioridade
+// Atualiza os contadores de prioridade de itens
 function atualizarContadoresPrioridade(listaCard) {
     // Contar itens por prioridade
     const itensAlta = listaCard.find('.lista-item.alta').length;
@@ -203,9 +228,687 @@ function atualizarContadorPrioridade(listaCard, prioridade, quantidade, titulo, 
     }
 }
 
-// Inicialização da funcionalidade de remoção de itens
+// Atualiza estatísticas do dashboard sem recarregar a página
+function atualizarDashboardStatsLocalmente() {
+    // Contar totais das listas
+    const totalListas = $('.lista-card').length;
+    const listasEmAndamento = $('.lista-card.em_andamento').length;
+    const listasConcluidas = $('.lista-card.concluida').length;
+    
+    // Atualizar os contadores no dashboard
+    $('.dashboard-card:eq(0) .stat-number').text(totalListas);
+    $('.dashboard-card:eq(1) .stat-number').text(listasEmAndamento);
+    $('.dashboard-card:eq(2) .stat-number').text(listasConcluidas);
+}
+
+// Adapta a interface para dispositivos móveis
+function adjustForMobile() {
+    // Se a largura da tela for menor que 576px (dispositivos muito pequenos)
+    if (window.innerWidth < 576) {
+        // Reduzir o número de itens mostrados em cada lista
+        $('.lista-itens').each(function() {
+            const items = $(this).find('.lista-item');
+            items.each(function(index) {
+                if (index > 1) { // Mostrar apenas os 2 primeiros itens em telas muito pequenas
+                    $(this).hide();
+                }
+            });
+            
+            // Mostrar o botão "Ver todos" para listas com mais de 2 itens
+            if (items.length > 2) {
+                // Se o botão "Ver todos" já não existir, adicione-o
+                if ($(this).find('.btn-view-all').length === 0) {
+                    const listaId = $(this).closest('.lista-card').find('[data-lista-id]').first().data('lista-id');
+                    const totalItems = items.length;
+                    $(this).append(`
+                        <div class="text-center mt-2">
+                            <a href="#" class="btn btn-sm btn-outline-primary view-lista btn-view-all" data-lista-id="${listaId}">
+                                Ver todos os ${totalItems} itens
+                            </a>
+                        </div>
+                    `);
+                }
+            }
+        });
+    } else {
+        // Em telas maiores, mostrar até 3 itens conforme o design original
+        $('.lista-item').show();
+        $('.btn-view-all').parent().remove();
+    }
+}
+
+// Funções auxiliares para normalização de dados
+function getPrioridadeDisplay(prioridade) {
+    switch (prioridade) {
+        case 'alta': return 'Alta';
+        case 'media': return 'Média';
+        case 'baixa': return 'Baixa';
+        default: return 'Média';
+    }
+}
+
+function getStatusDisplay(status) {
+    switch (status) {
+        case 'pendente': return 'Pendente';
+        case 'em_andamento': return 'Em andamento';
+        case 'concluido': return 'Concluído';
+        case 'adiado': return 'Adiado';
+        case 'cancelado': return 'Cancelado';
+        default: return 'Pendente';
+    }
+}
+
+// Função para adicionar um novo item à UI
+window.adicionarNovoItemNaUI = function(listaCard, item) {
+    // Normalizar os dados de resposta para os valores esperados
+    item = {
+        id: item.id || 0,
+        nome: item.nome,
+        descricao: item.descricao || '',
+        prioridade: item.prioridade || 'media',
+        status: item.status || 'pendente',
+        data_hora: item.data_hora,
+        lista_id: item.lista_id || item.lista,
+        prioridade_display: item.prioridade_display || getPrioridadeDisplay(item.prioridade),
+        status_display: item.status_display || getStatusDisplay(item.status),
+        tempo_restante: item.tempo_restante || '',
+        esta_atrasado: item.esta_atrasado || false,
+        porcentagem_concluida_lista: item.porcentagem_concluida_lista || 0
+    };
+
+    // Criar HTML para o novo item
+    const tempoRestante = item.tempo_restante || '';
+    const estaAtrasado = item.esta_atrasado ? 'overdue' : '';
+    const statusClass = item.status === 'concluido' ? 'concluido' : '';
+    const checkedAttr = item.status === 'concluido' ? 'checked' : '';
+    
+    const itemHTML = `
+        <div class="lista-item ${item.prioridade} ${statusClass} lista-item-new">
+            <input type="checkbox" class="item-checkbox" ${checkedAttr} data-item-id="${item.id}">
+            <div class="item-content">
+                <span class="item-nome">${item.nome}</span>
+                ${item.descricao ? `<p class="item-descricao">${item.descricao}</p>` : ''}
+                <div class="item-meta">
+                    <span class="item-badge badge-prioridade ${item.prioridade}">${item.prioridade_display}</span>
+                    ${item.status !== 'concluido' ? `<span class="item-badge badge-status">${item.status_display}</span>` : ''}
+                    ${item.data_hora ? `
+                        <span class="item-deadline ${estaAtrasado}">
+                            <i class="far ${estaAtrasado ? 'fa-clock' : 'fa-calendar-alt'} me-1"></i>
+                            ${tempoRestante}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+            <button class="btn-remove-item" type="button" data-item-id="${item.id}" title="Remover item">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    `;
+    
+    // Localizar onde inserir o novo item
+    const listaItens = listaCard.find('.lista-itens');
+    
+    // Se não houver itens, remover a mensagem "nenhum item" e criar div para itens
+    if (listaItens.length === 0) {
+        // Remover a mensagem "Esta lista ainda não tem itens"
+        const emptyState = listaCard.find('.lista-card-body .text-center');
+        
+        if (emptyState.length > 0) {
+            emptyState.remove();
+            
+            // Criar a div para itens
+            listaCard.find('.lista-card-body').append(`
+                <div class="lista-itens">
+                    ${itemHTML}
+                </div>
+            `);
+        }
+    } else {
+        // Adicionar o item à lista existente
+        listaItens.prepend(itemHTML);
+        
+        // Limitar a 3 itens visíveis
+        const itens = listaItens.find('.lista-item');
+        
+        if (itens.length > 3) {
+            // Se já existe um botão "Ver todos", apenas atualize o número
+            const verTodosBtn = listaItens.find('.btn.view-lista');
+            if (verTodosBtn.length > 0) {
+                verTodosBtn.text(`Ver todos os ${itens.length} itens`);
+            } else {
+                // Esconder o item mais antigo e adicionar botão "Ver todos"
+                itens.eq(3).hide();
+                listaItens.append(`
+                    <div class="text-center mt-2">
+                        <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="${item.lista_id}">
+                            Ver todos os ${itens.length} itens
+                        </a>
+                    </div>
+                `);
+                
+                // Adicionar handler para o novo botão
+                listaItens.find('.btn.view-lista').on('click', function(e) {
+                    e.preventDefault();
+                    const listaId = $(this).data('lista-id');
+                    window.location.href = `/listas/${listaId}/`;
+                });
+            }
+        }
+    }
+    
+    // Atualizar a contagem de itens e a porcentagem
+    const infoText = listaCard.find('.text-muted.small');
+    const contagem = infoText.text().split('|')[0].trim();
+    const totalItens = parseInt(contagem.split(' ')[0]) + 1;
+    const porcentagemConcluida = item.porcentagem_concluida_lista || parseInt(infoText.text().split('|')[1].trim().split('%')[0]);
+    infoText.text(`${totalItens} total | ${porcentagemConcluida}% concluído`);
+    
+    // Atualizar a barra de progresso com animação
+    const progressBar = listaCard.find('.progress-bar');
+    progressBar.css('width', porcentagemConcluida + '%');
+    progressBar.attr('aria-valuenow', porcentagemConcluida);
+    
+    // Adicionar classe de animação
+    progressBar.addClass('progress-bar-animated');
+    setTimeout(function() {
+        progressBar.removeClass('progress-bar-animated');
+    }, 1000);
+    
+    // Atualizar contadores de prioridade
+    const prioridadeAjustada = item.prioridade === 'alta' ? 'alta' : 
+                              item.prioridade === 'media' ? 'media' : 'baixa';
+    
+    // Encontrar o contador específico
+    const contadorSelector = prioridadeAjustada === 'alta' ? 'Itens de prioridade alta' :
+                           prioridadeAjustada === 'media' ? 'Itens de prioridade média' : 'Itens de prioridade baixa';
+    
+    const contadorAtual = listaCard.find(`.lista-card-footer span[title="${contadorSelector}"]`);
+    
+    if (contadorAtual.length > 0) {
+        // Atualizar contador existente
+        const valorAtual = parseInt(contadorAtual.text().trim());
+        contadorAtual.html(`<i class="fas fa-${prioridadeAjustada === 'alta' ? 'arrow-up' : prioridadeAjustada === 'media' ? 'equals' : 'arrow-down'} text-${prioridadeAjustada === 'alta' ? 'danger' : prioridadeAjustada === 'media' ? 'warning' : 'success'} me-1"></i>${valorAtual + 1}`);
+    } else {
+        // Criar novo contador
+        const novoContador = $(`<span title="${contadorSelector}"><i class="fas fa-${prioridadeAjustada === 'alta' ? 'arrow-up' : prioridadeAjustada === 'media' ? 'equals' : 'arrow-down'} text-${prioridadeAjustada === 'alta' ? 'danger' : prioridadeAjustada === 'media' ? 'warning' : 'success'} me-1"></i>1</span>`);
+        listaCard.find('.d-flex.flex-wrap.gap-2').append(novoContador);
+    }
+    
+    // Adicionar handler do checkbox ao novo item
+    const novoItem = listaCard.find(`.lista-item-new`);
+    novoItem.find('.item-checkbox').off('change').on('change', function() {
+        const itemId = $(this).data('item-id');
+        const concluido = $(this).prop('checked');
+        const novoStatus = concluido ? 'concluido' : 'pendente';
+        const itemElement = $(this).closest('.lista-item');
+        const listaCard = itemElement.closest('.lista-card');
+        
+        // Atualizar a classe do item imediatamente para feedback visual
+        if (concluido) {
+            itemElement.addClass('concluido');
+        } else {
+            itemElement.removeClass('concluido');
+        }
+        
+        // Atualizar barra de progresso imediatamente para feedback visual
+        const novaPortcentagem = atualizarProgressoLista(listaCard, concluido, itemId);
+        
+        // Enviar para a API
+        $.ajax({
+            url: `/api/itens/${itemId}/status/`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ status: novoStatus }),
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+            },
+            success: function(response) {
+                // Mostrar mensagem de sucesso discretamente
+                showMessage('success', 'Item atualizado!', true);
+            },
+            error: function(error) {
+                console.error('DEBUG: Erro ao atualizar status do item novo', error);
+                // Reverter a mudança no checkbox e na classe em caso de erro
+                itemElement.find('.item-checkbox').prop('checked', !concluido);
+                if (concluido) {
+                    itemElement.removeClass('concluido');
+                } else {
+                    itemElement.addClass('concluido');
+                }
+                
+                // Reverter a barra de progresso
+                atualizarProgressoLista(listaCard, !concluido, itemId);
+                
+                showMessage('danger', 'Erro ao atualizar status do item.', true);
+            }
+        });
+    });
+    
+    // Adicionar handler para o botão de remover
+    novoItem.find('.btn-remove-item').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const itemId = $(this).data('item-id');
+        const itemElement = $(this).closest('.lista-item');
+        const itemNome = itemElement.find('.item-nome').text().trim();
+        
+        // Confirmar antes de remover
+        if (confirm(`Tem certeza que deseja remover o item "${itemNome}"?`)) {
+            removerItem(itemId, itemElement);
+        }
+    });
+    
+    // Remover a classe lista-item-new após a animação
+    setTimeout(function() {
+        novoItem.removeClass('lista-item-new');
+    }, 2000);
+    
+    // Atualizar estatísticas do dashboard localmente
+    atualizarDashboardStatsLocalmente();
+};
+
+/**
+ * Inicialização da página
+ */
 $(document).ready(function() {
-    console.log('DEBUG: Inicializando funcionalidade de remoção de itens');
+    /**
+     * Funcionalidades de Swipe para Mobile
+     */
+    // Variáveis para controle de toque
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let currentItem = null;
+    let swipeThreshold = 70; // Limiar para considerar um swipe válido
+    let maxSwipeLeft = 100; // Movimento máximo para esquerda
+    let maxSwipeRight = 60; // Movimento máximo para direita
+    let animationInProgress = false;
+    
+    // Touch start event
+    $(document).on('touchstart', '.lista-item', function(e) {
+        if (animationInProgress) return;
+        
+        touchStartX = e.originalEvent.touches[0].clientX;
+        currentItem = $(this);
+        
+        // Remover qualquer overlay existente
+        $('.swipe-overlay').remove();
+        // Resetar transformação
+        $(this).css('transform', '');
+        
+        // Inicializar o elemento para animações suaves
+        $(this).addClass('swiping');
+    });
+    
+    // Touch move event
+    $(document).on('touchmove', '.lista-item', function(e) {
+        if (!currentItem || animationInProgress) return;
+        
+        const currentX = e.originalEvent.touches[0].clientX;
+        const diffX = currentX - touchStartX;
+        
+        // Se estiver deslizando
+        if (Math.abs(diffX) > 10) {
+            e.preventDefault(); // Impedir o scroll vertical durante o swipe
+            
+            // Limitar o movimento
+            let translateX;
+            
+            if (diffX < 0) {
+                // Swipe para esquerda (excluir) - limitar movimento máximo
+                translateX = Math.max(diffX, -maxSwipeLeft);
+                
+                // Criar indicador de exclusão se não existir
+                if ($(this).find('.swipe-overlay.delete').length === 0) {
+                    $(this).append('<div class="swipe-overlay delete"><i class="fas fa-trash-alt"></i></div>');
+                }
+                
+                // Ajustar opacidade do indicador de exclusão
+                const opacity = Math.min(0.9, Math.abs(diffX) / 100);
+                $(this).find('.swipe-overlay.delete').css('opacity', opacity);
+                
+                // Remover indicador de conclusão se existir
+                $(this).find('.swipe-overlay.complete').remove();
+            } else {
+                // Swipe para direita (concluir) - limitar movimento máximo
+                translateX = Math.min(diffX, maxSwipeRight);
+                
+                // Criar indicador de conclusão se não existir
+                if ($(this).find('.swipe-overlay.complete').length === 0) {
+                    $(this).append('<div class="swipe-overlay complete"><i class="fas fa-check"></i></div>');
+                }
+                
+                // Ajustar opacidade do indicador de conclusão
+                const opacity = Math.min(0.9, Math.abs(diffX) / 80);
+                $(this).find('.swipe-overlay.complete').css('opacity', opacity);
+                
+                // Remover indicador de exclusão se existir
+                $(this).find('.swipe-overlay.delete').remove();
+            }
+            
+            // Aplicar transformação com efeito de resistência
+            $(this).css('transform', `translateX(${translateX}px)`);
+            
+            // Alterar cor de fundo baseado na direção e progresso
+            if (diffX < 0) {
+                // Vermelho para exclusão (mais intenso conforme progride)
+                const redIntensity = Math.min(15, Math.abs(diffX) / 10);
+                $(this).css('background-color', `rgba(255, 100, 100, 0.${Math.floor(redIntensity)})`);
+            } else {
+                // Verde para marcar como concluído
+                const greenIntensity = Math.min(15, Math.abs(diffX) / 8);
+                $(this).css('background-color', `rgba(100, 255, 100, 0.${Math.floor(greenIntensity)})`);
+            }
+        }
+    });
+    
+    // Touch end event
+    $(document).on('touchend', '.lista-item', function(e) {
+        if (!currentItem || animationInProgress) return;
+        
+        touchEndX = e.originalEvent.changedTouches[0].clientX;
+        const diffX = touchEndX - touchStartX;
+        const swipeDistance = Math.abs(diffX);
+        
+        // Remover classe de swiping
+        $(this).removeClass('swiping');
+        
+        // Remover background temporário
+        $(this).css('background-color', '');
+        
+        if (swipeDistance > swipeThreshold) {
+            // Ação baseada na direção do swipe
+            if (diffX < 0) {
+                // Swipe para esquerda - Excluir
+                mostrarConfirmacaoExclusao($(this));
+            } else {
+                // Swipe para direita - Marcar como concluído/pendente
+                toggleItemConcluido($(this));
+            }
+        } else {
+            // Swipe não foi suficiente, retornar à posição original
+            resetSwipe($(this));
+        }
+        
+        currentItem = null;
+    });
+    
+    // Touch cancel event
+    $(document).on('touchcancel', '.lista-item', function(e) {
+        if (!currentItem) return;
+        
+        // Retornar à posição original
+        resetSwipe($(this));
+        
+        // Resetar variáveis
+        currentItem = null;
+    });
+    
+    // Função para resetar o swipe
+    function resetSwipe(item) {
+// Animação suave de retorno
+        item.css('transition', 'transform 0.3s ease-out, background-color 0.3s ease-out');
+        item.css('transform', '');
+        item.css('background-color', '');
+        
+        // Remover overlay após a animação
+        setTimeout(function() {
+            item.find('.swipe-overlay').remove();
+            item.css('transition', '');
+        }, 300);
+    }
+    
+    // Função para mostrar confirmação de exclusão aprimorada
+    function mostrarConfirmacaoExclusao(item) {
+        animationInProgress = true;
+        
+        // Identificar o item e buscar dados necessários
+        const itemId = item.find('.item-checkbox').data('item-id');
+        const itemNome = item.find('.item-nome').text().trim();
+        
+        // Manter o item deslocado e realçar o overlay
+        item.css({
+            'transform': `translateX(-${maxSwipeLeft}px)`,
+            'transition': 'transform 0.2s ease-out'
+        });
+        
+        // Atualizar overlay de exclusão para ficar mais visível
+        item.find('.swipe-overlay.delete').css({
+            'opacity': '1',
+            'width': '100px'
+        });
+        
+        // Criar toast de confirmação
+        const toastHTML = `
+            <div class="toast-confirm" id="toast-delete-${itemId}">
+                <div class="toast-message">
+                    <span>Excluir "${itemNome.length > 15 ? itemNome.substring(0, 15) + '...' : itemNome}"?</span>
+                </div>
+                <div class="toast-actions">
+                    <button class="btn-toast-cancel" data-action="cancel">Cancelar</button>
+                    <button class="btn-toast-confirm" data-action="confirm" data-item-id="${itemId}">Excluir</button>
+                </div>
+            </div>
+        `;
+        
+        // Remover toasts anteriores
+        $('.toast-confirm').remove();
+        
+        // Adicionar a nova toast
+        $('body').append(toastHTML);
+        
+        // Animar entrada do toast
+        const toast = $(`#toast-delete-${itemId}`);
+        setTimeout(() => toast.addClass('show'), 10);
+        
+        // Handler para cancelar
+        toast.find('.btn-toast-cancel').on('click', function() {
+            // Esconder toast
+            toast.removeClass('show');
+            setTimeout(function() {
+                toast.remove();
+                // Resetar item
+                resetSwipe(item);
+                animationInProgress = false;
+            }, 300);
+        });
+        
+        // Handler para confirmar
+        toast.find('.btn-toast-confirm').on('click', function() {
+            const itemId = $(this).data('item-id');
+            
+            // Esconder toast
+            toast.removeClass('show');
+            setTimeout(() => toast.remove(), 300);
+            
+            // Animar exclusão do item
+            item.addClass('removing-item');
+            
+            // Chamar função de exclusão
+            removerItem(itemId, item);
+            
+            // Resetar flag após completar a animação
+            setTimeout(() => {
+                animationInProgress = false;
+            }, 500);
+        });
+        
+        // Auto-remover após 5 segundos se não houver interação
+        setTimeout(function() {
+            if (toast.length) {
+                toast.removeClass('show');
+                setTimeout(function() {
+                    toast.remove();
+                    resetSwipe(item);
+                    animationInProgress = false;
+                }, 300);
+            }
+        }, 5000);
+    }
+    
+    // Função para alternar o estado concluído do item
+    function toggleItemConcluido(item) {
+        animationInProgress = true;
+        
+        // Identificar o item e seu estado atual
+        const checkbox = item.find('.item-checkbox');
+        const itemId = checkbox.data('item-id');
+        const concluido = !checkbox.prop('checked'); // Inverter o estado atual
+        
+        // Animar o item deslocando totalmente para a direita e depois voltando
+        item.css({
+            'transform': `translateX(${maxSwipeRight * 1.5}px)`,
+            'transition': 'transform 0.2s ease-out, background-color 0.2s ease-out'
+        });
+        
+        // Aplicar uma cor de fundo visual temporária
+        item.css('background-color', concluido ? 'rgba(100, 255, 100, 0.2)' : 'rgba(255, 255, 255, 1)');
+        
+        // Atualizar overlay para ficar mais visível
+        item.find('.swipe-overlay.complete').css({
+            'opacity': '1',
+            'width': '60px'
+        });
+        
+        // Esperar um momento antes de começar a ação
+        setTimeout(function() {
+            // Marcar/desmarcar o checkbox
+            checkbox.prop('checked', concluido);
+            
+            // Atualizar classes visuais
+            if (concluido) {
+                item.addClass('concluido');
+            } else {
+                item.removeClass('concluido');
+            }
+            
+            // Obter a lista-card pai para atualização
+            const listaCard = item.closest('.lista-card');
+            
+            // Atualizar barra de progresso
+            const novaPortcentagem = atualizarProgressoLista(listaCard, concluido, itemId);
+            
+            // Preparar dados para API
+            const novoStatus = concluido ? 'concluido' : 'pendente';
+            
+            // Animar o retorno à posição normal
+            setTimeout(function() {
+                item.css({
+                    'transform': '',
+                    'transition': 'transform 0.3s ease-out, background-color 0.3s ease-out'
+                });
+                
+                // Remover overlay após a animação
+                setTimeout(function() {
+                    item.find('.swipe-overlay').remove();
+                    item.css('transition', '');
+                    animationInProgress = false;
+                }, 300);
+            }, 400);
+            
+            // Chamar API para salvar o novo status
+            $.ajax({
+                url: `/api/itens/${itemId}/status/`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ status: novoStatus }),
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+                },
+                success: function(response) {
+                    // Mostrar mensagem discreta de sucesso
+                    const mensagem = concluido ? 'Item concluído!' : 'Item marcado como pendente!';
+                    showMessage('success', mensagem, true);
+                    
+                    // Atualizar porcentagem se houver discrepância
+                    if (response.item && response.item.lista && response.item.lista.porcentagem_concluida !== undefined) {
+                        const porcentagemAPI = response.item.lista.porcentagem_concluida;
+                        if (porcentagemAPI !== novaPortcentagem) {
+                            // Atualizar texto e barra de progresso
+                            const infoText = listaCard.find('.text-muted.small');
+                            const textoAtual = infoText.text();
+                            const totalItens = parseInt(textoAtual.split('|')[0].trim().split(' ')[0]);
+                            
+                            infoText.text(`${totalItens} total | ${porcentagemAPI}% concluído`);
+                            
+                            const progressBar = listaCard.find('.progress-bar');
+                            progressBar.css('width', porcentagemAPI + '%');
+                            progressBar.attr('aria-valuenow', porcentagemAPI);
+                        }
+                    }
+                    
+                    // Atualizar contadores de prioridade se disponíveis na resposta
+                    if (response.item && response.item.lista) {
+                        const lista = response.item.lista;
+                        if (lista.itens_alta_prioridade !== undefined) {
+                            atualizarContadorPrioridade(listaCard, 'alta', lista.itens_alta_prioridade, 'Itens de prioridade alta', 'fa-arrow-up', 'text-danger');
+                        }
+                        if (lista.itens_media_prioridade !== undefined) {
+                            atualizarContadorPrioridade(listaCard, 'media', lista.itens_media_prioridade, 'Itens de prioridade média', 'fa-equals', 'text-warning');
+                        }
+                        if (lista.itens_baixa_prioridade !== undefined) {
+                            atualizarContadorPrioridade(listaCard, 'baixa', lista.itens_baixa_prioridade, 'Itens de prioridade baixa', 'fa-arrow-down', 'text-success');
+                        }
+                    }
+                    
+                    // Atualizar o status da lista se necessário
+                    const listaStatus = response.item?.lista?.status;
+                    const listaStatusDisplay = response.item?.lista?.status_display;
+                    
+                    if (listaStatus) {
+                        // Remover as classes de status antigas
+                        listaCard.removeClass('em_andamento concluida pausada arquivada');
+                        
+                        // Adicionar a nova classe de status
+                        listaCard.addClass(listaStatus);
+                        
+                        // Atualizar o badge de status
+                        const statusBadge = listaCard.find('.badge-status.em_andamento, .badge-status.concluida, .badge-status.pausada, .badge-status.arquivada');
+                        statusBadge.removeClass('em_andamento concluida pausada arquivada');
+                        statusBadge.addClass(listaStatus);
+                        
+                        if (listaStatusDisplay) {
+                            statusBadge.text(listaStatusDisplay);
+                        }
+                        
+                        // Adicionar classe de animação se a lista foi concluída
+                        if (listaStatus === 'concluida' && !listaCard.hasClass('animation-played')) {
+                            listaCard.addClass('animation-played');
+                            listaCard.find('.progress-bar').addClass('progress-bar-animated bg-success');
+                            setTimeout(function() {
+                                listaCard.find('.progress-bar').removeClass('progress-bar-animated');
+                            }, 2000);
+                            
+                            // Atualizar o dashboard localmente
+                            atualizarDashboardStatsLocalmente();
+                        }
+                    }
+                },
+                error: function(error) {
+                    console.error('DEBUG: Erro ao atualizar status via swipe', error);
+                    
+                    // Reverter UI em caso de erro
+                    checkbox.prop('checked', !concluido);
+                    
+                    if (concluido) {
+                        item.removeClass('concluido');
+                    } else {
+                        item.addClass('concluido');
+                    }
+                    
+                    // Reverter a barra de progresso
+                    atualizarProgressoLista(listaCard, !concluido, itemId);
+                    
+                    // Mostrar erro
+                    showMessage('danger', 'Erro ao atualizar item.', true);
+                }
+            });
+        }, 300);
+    }
+    
+    /**
+     * Handlers para elementos da UI
+     */
     
     // Handler para o botão de remover item
     $(document).on('click', '.btn-remove-item', function(e) {
@@ -222,122 +925,11 @@ $(document).ready(function() {
         }
     });
     
-    // Implementação do swipe para remover (touch devices)
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let currentItem = null;
-    
-    // Touch start event
-    $(document).on('touchstart', '.lista-item', function(e) {
-        touchStartX = e.originalEvent.touches[0].clientX;
-        currentItem = $(this);
-        // Remover qualquer elemento de confirmação que possa existir
-        $('.delete-confirm').remove();
-    });
-    
-    // Touch move event
-    $(document).on('touchmove', '.lista-item', function(e) {
-        if (!currentItem) return;
-        
-        const currentX = e.originalEvent.touches[0].clientX;
-        const diffX = touchStartX - currentX;
-        
-        // Se estiver deslizando para a esquerda (remover)
-        if (diffX > 20) {
-            e.preventDefault(); // Impedir o scroll
-            
-            // Limitar o movimento para não ultrapassar a área de confirmação
-            const translateX = Math.min(diffX, 80);
-            $(this).css('transform', `translateX(-${translateX}px)`);
-            
-            // Adicionar área de confirmação se não existir
-            if ($(this).find('.delete-confirm').length === 0) {
-                $(this).append('<div class="delete-confirm"><i class="fas fa-trash-alt"></i></div>');
-            }
-            
-            // Se o movimento for suficiente para mostrar a opção de exclusão
-            if (diffX > 60) {
-                $(this).addClass('swipe-to-delete');
-            } else {
-                $(this).removeClass('swipe-to-delete');
-            }
-        }
-    });
-    
-    // Touch end event
-    $(document).on('touchend', '.lista-item', function(e) {
-        if (!currentItem) return;
-        
-        touchEndX = e.originalEvent.changedTouches[0].clientX;
-        const diffX = touchStartX - touchEndX;
-        
-        // Se o swipe for suficiente para acionar a exclusão
-        if (diffX > 80) {
-            const itemId = $(this).find('.item-checkbox').data('item-id');
-            const itemNome = $(this).find('.item-nome').text().trim();
-            
-            // Criar alerta de confirmação
-            const alertHTML = `
-                <div class="delete-confirm-alert">
-                    <span>Remover "${itemNome.length > 15 ? itemNome.substring(0, 15) + '...' : itemNome}"?</span>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-light cancel-delete">Não</button>
-                        <button class="btn btn-sm btn-danger confirm-delete" data-item-id="${itemId}">Sim</button>
-                    </div>
-                </div>
-            `;
-            
-            // Remover alertas anteriores
-            $('.delete-confirm-alert').remove();
-            
-            // Adicionar o novo alerta
-            $('body').append(alertHTML);
-            
-            // Handler para cancelar
-            $('.cancel-delete').on('click', function() {
-                currentItem.css('transform', '');
-                currentItem.removeClass('swipe-to-delete');
-                $('.delete-confirm').remove();
-                $('.delete-confirm-alert').remove();
-            });
-            
-            // Handler para confirmar
-            $('.confirm-delete').on('click', function() {
-                const itemId = $(this).data('item-id');
-                removerItem(itemId, currentItem);
-                $('.delete-confirm-alert').remove();
-            });
-            
-            // Auto-remover após 5 segundos se não houver interação
-            setTimeout(function() {
-                $('.delete-confirm-alert').fadeOut(300, function() {
-                    $(this).remove();
-                });
-                currentItem.css('transform', '');
-                currentItem.removeClass('swipe-to-delete');
-                $('.delete-confirm').remove();
-            }, 5000);
-        } else {
-            // Se o swipe não for suficiente, voltar ao normal
-            $(this).css('transform', '');
-            $(this).removeClass('swipe-to-delete');
-            $('.delete-confirm').remove();
-        }
-        
-        currentItem = null;
-    });
-});
-
-// Inicialização da página
-$(document).ready(function() {
-    console.log('DEBUG: document.ready da página home iniciado');
-    
     // Remover todos os handlers anteriores para evitar duplicação
     $('.item-checkbox').off('change');
     
     // Adicionar o novo handler para checkbox
     $('.item-checkbox').on('change', function() {
-        console.log('DEBUG: Checkbox alterado');
         const itemId = $(this).data('item-id');
         const concluido = $(this).prop('checked');
         const novoStatus = concluido ? 'concluido' : 'pendente';
@@ -364,15 +956,11 @@ $(document).ready(function() {
                 xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
             },
             success: function(response) {
-                console.log('DEBUG: API response', response);
-                
                 // A barra já foi atualizada para feedback visual rápido.
                 // Se a API retornou uma porcentagem diferente, ajustamos
                 if (response.item && response.item.lista && response.item.lista.porcentagem_concluida !== undefined) {
                     const porcentagemAPI = response.item.lista.porcentagem_concluida;
                     if (porcentagemAPI !== novaPortcentagem) {
-                        console.log('DEBUG: Atualizando porcentagem da API:', porcentagemAPI);
-                        
                         // Obter a contagem de itens atual da interface
                         const infoText = listaCard.find('.text-muted.small');
                         const textoAtual = infoText.text();
@@ -393,13 +981,13 @@ $(document).ready(function() {
                 if (response.item && response.item.lista) {
                     const lista = response.item.lista;
                     if (lista.itens_alta_prioridade !== undefined) {
-                        atualizarContadorPrioridade(listaCard, 'alta', lista.itens_alta_prioridade);
+                        atualizarContadorPrioridade(listaCard, 'alta', lista.itens_alta_prioridade, 'Itens de prioridade alta', 'fa-arrow-up', 'text-danger');
                     }
                     if (lista.itens_media_prioridade !== undefined) {
-                        atualizarContadorPrioridade(listaCard, 'media', lista.itens_media_prioridade);
+                        atualizarContadorPrioridade(listaCard, 'media', lista.itens_media_prioridade, 'Itens de prioridade média', 'fa-equals', 'text-warning');
                     }
                     if (lista.itens_baixa_prioridade !== undefined) {
-                        atualizarContadorPrioridade(listaCard, 'baixa', lista.itens_baixa_prioridade);
+                        atualizarContadorPrioridade(listaCard, 'baixa', lista.itens_baixa_prioridade, 'Itens de prioridade baixa', 'fa-arrow-down', 'text-success');
                     }
                 }
                 
@@ -459,81 +1047,6 @@ $(document).ready(function() {
         });
     });
     
-    // Função para atualizar contadores de prioridade
-    function atualizarContadorPrioridade(listaCard, prioridade, quantidade) {
-        let icone, cor, titulo;
-        
-        if (prioridade === 'alta') {
-            icone = 'fa-arrow-up';
-            cor = 'text-danger';
-            titulo = 'Itens de prioridade alta';
-        } else if (prioridade === 'media') {
-            icone = 'fa-equals';
-            cor = 'text-warning';
-            titulo = 'Itens de prioridade média';
-        } else {
-            icone = 'fa-arrow-down';
-            cor = 'text-success';
-            titulo = 'Itens de prioridade baixa';
-        }
-        
-        let elementoContador = listaCard.find(`.lista-card-footer span[title="${titulo}"]`);
-        
-        if (quantidade > 0) {
-            if (elementoContador.length === 0) {
-                elementoContador = $(`<span title="${titulo}"><i class="fas ${icone} ${cor} me-1"></i>${quantidade}</span>`);
-                listaCard.find('.d-flex.flex-wrap.gap-2').append(elementoContador);
-            } else {
-                elementoContador.html(`<i class="fas ${icone} ${cor} me-1"></i>${quantidade}`);
-            }
-        } else if (elementoContador.length > 0) {
-            elementoContador.remove();
-        }
-    }
-    
-    // Função para atualizar o dashboard localmente
-    function atualizarDashboardStatsLocalmente() {
-        console.log('DEBUG: atualizando dashboard estatísticas localmente');
-        
-        // Contar totais das listas
-        const totalListas = $('.lista-card').length;
-        const listasEmAndamento = $('.lista-card.em_andamento').length;
-        const listasConcluidas = $('.lista-card.concluida').length;
-        
-        // Atualizar os contadores no dashboard
-        $('.dashboard-card:eq(0) .stat-number').text(totalListas);
-        $('.dashboard-card:eq(1) .stat-number').text(listasEmAndamento);
-        $('.dashboard-card:eq(2) .stat-number').text(listasConcluidas);
-    }
-    
-    // Função para exibir mensagens
-    function showMessage(type, message, isCompact = false) {
-        console.log('DEBUG: showMessage chamada', {type, message, isCompact});
-        const alertClass = isCompact ? 'alert-compact' : '';
-        const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show ${alertClass}" role="alert">
-                ${message}
-
-            </div>
-        `;
-        
-        if (isCompact) {
-            // Remover alertas compactos existentes
-            $('.alert-compact').remove();
-            
-            // Adicionar o novo alerta compacto ao final do body
-            $('body').append(alertHtml);
-        } else {
-            // Inserir alerta no topo da página
-            $('.page-title').before(alertHtml);
-        }
-        
-        // Auto-remover após 3 segundos para mensagens compactas, 5 para as regulares
-        setTimeout(function() {
-            $('.alert' + (isCompact ? '.alert-compact' : '')).alert('close');
-        }, isCompact ? 3000 : 5000);
-    }
-    
     // Ver lista completa
     $('.view-lista').on('click', function(e) {
         e.preventDefault();
@@ -585,54 +1098,9 @@ $(document).ready(function() {
         }
     });
     
-    // Ajuste para melhorar a experiência em dispositivos móveis
-    function adjustForMobile() {
-        // Se a largura da tela for menor que 576px (dispositivos muito pequenos)
-        if (window.innerWidth < 576) {
-            // Reduzir o número de itens mostrados em cada lista
-            $('.lista-itens').each(function() {
-                const items = $(this).find('.lista-item');
-                items.each(function(index) {
-                    if (index > 1) { // Mostrar apenas os 2 primeiros itens em telas muito pequenas
-                        $(this).hide();
-                    }
-                });
-                
-                // Mostrar o botão "Ver todos" para listas com mais de 2 itens
-                if (items.length > 2) {
-                    // Se o botão "Ver todos" já não existir, adicione-o
-                    if ($(this).find('.btn-view-all').length === 0) {
-                        const listaId = $(this).closest('.lista-card').find('[data-lista-id]').first().data('lista-id');
-                        const totalItems = items.length;
-                        $(this).append(`
-                            <div class="text-center mt-2">
-                                <a href="#" class="btn btn-sm btn-outline-primary view-lista btn-view-all" data-lista-id="${listaId}">
-                                    Ver todos os ${totalItems} itens
-                                </a>
-                            </div>
-                        `);
-                    }
-                }
-            });
-        } else {
-            // Em telas maiores, mostrar até 3 itens conforme o design original
-            $('.lista-item').show();
-            $('.btn-view-all').parent().remove();
-        }
-    }
-    
-    // Executar o ajuste na inicialização
-    adjustForMobile();
-    
-    // Executar o ajuste quando a tela for redimensionada
-    $(window).on('resize', function() {
-        adjustForMobile();
-    });
-
     // Adicionar item à lista
     $('.add-item').on('click', function(e) {
         e.preventDefault();
-        console.log('DEBUG: Botão add-item clicado');
         const listaId = $(this).data('lista-id');
         const listaNome = $(this).closest('.lista-card').find('.lista-title').text().trim();
         
@@ -646,260 +1114,170 @@ $(document).ready(function() {
         // Mostrar o modal
         $('#modalNovoItem').modal('show');
     });
+    
+    // Executar o ajuste para dispositivos móveis na inicialização
+    adjustForMobile();
+    
+    // Executar o ajuste quando a tela for redimensionada
+    $(window).on('resize', function() {
+        adjustForMobile();
+    });
 });
 
-// Função para adicionar um novo item à UI
-window.adicionarNovoItemNaUI = function(listaCard, item) {
-    console.log('DEBUG: adicionarNovoItemNaUI iniciada', { listaCard: listaCard.length, item: item });
+// Adicionar CSS necessário para as novas funcionalidades
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+    /* Estilos para melhorar swipe actions no mobile */
+    .lista-item.swiping {
+        will-change: transform, background-color;
+        transition: transform 0.1s ease-out;
+    }
     
-    // Normalizar os dados de resposta para os valores esperados
-    item = {
-        id: item.id || 0,
-        nome: item.nome,
-        descricao: item.descricao || '',
-        prioridade: item.prioridade || 'media',
-        status: item.status || 'pendente',
-        data_hora: item.data_hora,
-        lista_id: item.lista_id || item.lista,
-        prioridade_display: item.prioridade_display || getPrioridadeDisplay(item.prioridade),
-        status_display: item.status_display || getStatusDisplay(item.status),
-        tempo_restante: item.tempo_restante || '',
-        esta_atrasado: item.esta_atrasado || false,
-        porcentagem_concluida_lista: item.porcentagem_concluida_lista || 0
-    };
+    /* Overlay para ações de swipe */
+    .swipe-overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease-out;
+    }
     
-    console.log('DEBUG: Item normalizado', item);
-
-    // Criar HTML para o novo item
-    const tempoRestante = item.tempo_restante || '';
-    const estaAtrasado = item.esta_atrasado ? 'overdue' : '';
-    const statusClass = item.status === 'concluido' ? 'concluido' : '';
-    const checkedAttr = item.status === 'concluido' ? 'checked' : '';
+    .swipe-overlay.delete {
+        right: 0;
+        width: 0;
+        color: white;
+        background-color: var(--error-color);
+        border-top-right-radius: var(--card-border-radius);
+        border-bottom-right-radius: var(--card-border-radius);
+    }
     
-    const itemHTML = `
-        <div class="lista-item ${item.prioridade} ${statusClass} lista-item-new">
-            <input type="checkbox" class="item-checkbox" ${checkedAttr} data-item-id="${item.id}">
-            <div class="item-content">
-                <span class="item-nome">${item.nome}</span>
-                ${item.descricao ? `<p class="item-descricao">${item.descricao}</p>` : ''}
-                <div class="item-meta">
-                    <span class="item-badge badge-prioridade ${item.prioridade}">${item.prioridade_display}</span>
-                    ${item.status !== 'concluido' ? `<span class="item-badge badge-status">${item.status_display}</span>` : ''}
-                    ${item.data_hora ? `
-                        <span class="item-deadline ${estaAtrasado}">
-                            <i class="far ${estaAtrasado ? 'fa-clock' : 'fa-calendar-alt'} me-1"></i>
-                            ${tempoRestante}
-                        </span>
-                    ` : ''}
-                </div>
-            </div>
-            <!-- Adicionando botão de remover para novos itens -->
-            <button class="btn-remove-item" type="button" data-item-id="${item.id}" title="Remover item">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
+    .swipe-overlay.complete {
+        left: 0;
+        width: 0;
+        color: white;
+        background-color: var(--success-color);
+        border-top-left-radius: var(--card-border-radius);
+        border-bottom-left-radius: var(--card-border-radius);
+    }
+    
+    .swipe-overlay i {
+        font-size: 1.2rem;
+    }
+    
+    /* Toast de confirmação estilizado */
+    .toast-confirm {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100%);
+        width: 90%;
+        max-width: 320px;
+        background-color: #333;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        z-index: 9999;
+        transition: transform 0.3s ease-out;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .toast-confirm.show {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .toast-message {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .toast-message span {
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .toast-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 8px;
+        background-color: #444;
+    }
+    
+    .toast-actions button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-transform: uppercase;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-toast-cancel {
+        background-color: transparent;
+        color: rgba(255, 255, 255, 0.8);
+        margin-right: 8px;
+    }
+    
+    .btn-toast-cancel:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-toast-confirm {
+        background-color: var(--error-color);
+        color: white;
+    }
+    
+    .btn-toast-confirm:hover {
+        background-color: #ff0000;
+    }
+    
+    /* Animação aprimorada para item sendo removido */
+    .removing-item {
+        animation: remove-item-enhanced 0.5s ease forwards;
+    }
+    
+    @keyframes remove-item-enhanced {
+        0% {
+            opacity: 1;
+            height: auto;
+            transform: translateX(-100px);
+            margin-bottom: 0.75rem;
+        }
+        50% {
+            opacity: 0.2;
+            transform: translateX(-100%);
+            height: auto;
+            margin-bottom: 0.75rem;
+        }
+        100% {
+            opacity: 0;
+            height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            transform: translateX(-100%);
+        }
+    }
+    
+    /* Efeito de feedback ao concluir item por swipe */
+    @keyframes complete-item-flash {
+        0% { background-color: rgba(100, 255, 100, 0.3); }
+        100% { background-color: white; }
+    }
+    
+    .complete-item-flash {
+        animation: complete-item-flash 1s ease-out;
+    }
     `;
-    
-    console.log('DEBUG: HTML do item criado');
-    
-    // Localizar onde inserir o novo item
-    const listaItens = listaCard.find('.lista-itens');
-    console.log('DEBUG: listaItens encontrada', listaItens.length);
-    
-    // Se não houver itens, remover a mensagem "nenhum item" e criar div para itens
-    if (listaItens.length === 0) {
-        console.log('DEBUG: Nenhum item encontrado, criando primeiro item');
-        // Remover a mensagem "Esta lista ainda não tem itens"
-        const emptyState = listaCard.find('.lista-card-body .text-center');
-        
-        if (emptyState.length > 0) {
-            emptyState.remove();
-            
-            // Criar a div para itens
-            listaCard.find('.lista-card-body').append(`
-                <div class="lista-itens">
-                    ${itemHTML}
-                </div>
-            `);
-            console.log('DEBUG: Div de itens criada e item adicionado');
-        }
-    } else {
-        // Adicionar o item à lista existente
-        listaItens.prepend(itemHTML);
-        console.log('DEBUG: Item adicionado à lista existente');
-        
-        // Limitar a 3 itens visíveis
-        const itens = listaItens.find('.lista-item');
-        console.log('DEBUG: Total de itens agora', itens.length);
-        
-        if (itens.length > 3) {
-            // Se já existe um botão "Ver todos", apenas atualize o número
-            const verTodosBtn = listaItens.find('.btn.view-lista');
-            if (verTodosBtn.length > 0) {
-                verTodosBtn.text(`Ver todos os ${itens.length} itens`);
-                console.log('DEBUG: Botão Ver todos atualizado');
-            } else {
-                // Esconder o item mais antigo e adicionar botão "Ver todos"
-                itens.eq(3).hide();
-                listaItens.append(`
-                    <div class="text-center mt-2">
-                        <a href="#" class="btn btn-sm btn-outline-primary view-lista" data-lista-id="${item.lista_id}">
-                            Ver todos os ${itens.length} itens
-                        </a>
-                    </div>
-                `);
-                console.log('DEBUG: Botão Ver todos criado');
-                
-                // Adicionar handler para o novo botão
-                listaItens.find('.btn.view-lista').on('click', function(e) {
-                    e.preventDefault();
-                    const listaId = $(this).data('lista-id');
-                    window.location.href = `/listas/${listaId}/`;
-                });
-            }
-        }
-    }
-    
-    // Atualizar a contagem de itens e a porcentagem
-    const infoText = listaCard.find('.text-muted.small');
-    const contagem = infoText.text().split('|')[0].trim();
-    const totalItens = parseInt(contagem.split(' ')[0]) + 1;
-    const porcentagemConcluida = item.porcentagem_concluida_lista || parseInt(infoText.text().split('|')[1].trim().split('%')[0]);
-    infoText.text(`${totalItens} total | ${porcentagemConcluida}% concluído`);
-    console.log('DEBUG: Contagem e porcentagem atualizadas', { totalItens, porcentagemConcluida });
-    
-    // Atualizar a barra de progresso com animação
-    const progressBar = listaCard.find('.progress-bar');
-    progressBar.css('width', porcentagemConcluida + '%');
-    progressBar.attr('aria-valuenow', porcentagemConcluida);
-    
-    // Adicionar classe de animação
-    progressBar.addClass('progress-bar-animated');
-    setTimeout(function() {
-        progressBar.removeClass('progress-bar-animated');
-    }, 1000);
-    console.log('DEBUG: Barra de progresso atualizada');
-    
-    // Atualizar contadores de prioridade
-    const prioridadeAjustada = item.prioridade === 'alta' ? 'alta' : 
-                              item.prioridade === 'media' ? 'media' : 'baixa';
-    
-    // Encontrar o contador específico
-    const contadorSelector = prioridadeAjustada === 'alta' ? 'Itens de prioridade alta' :
-                           prioridadeAjustada === 'media' ? 'Itens de prioridade média' : 'Itens de prioridade baixa';
-    
-    const contadorAtual = listaCard.find(`.lista-card-footer span[title="${contadorSelector}"]`);
-    
-    if (contadorAtual.length > 0) {
-        // Atualizar contador existente
-        const valorAtual = parseInt(contadorAtual.text().trim());
-        contadorAtual.html(`<i class="fas fa-${prioridadeAjustada === 'alta' ? 'arrow-up' : prioridadeAjustada === 'media' ? 'equals' : 'arrow-down'} text-${prioridadeAjustada === 'alta' ? 'danger' : prioridadeAjustada === 'media' ? 'warning' : 'success'} me-1"></i>${valorAtual + 1}`);
-        console.log('DEBUG: Contador existente atualizado', { prioridadeAjustada, novoValor: valorAtual + 1 });
-    } else {
-        // Criar novo contador
-        const novoContador = $(`<span title="${contadorSelector}"><i class="fas fa-${prioridadeAjustada === 'alta' ? 'arrow-up' : prioridadeAjustada === 'media' ? 'equals' : 'arrow-down'} text-${prioridadeAjustada === 'alta' ? 'danger' : prioridadeAjustada === 'media' ? 'warning' : 'success'} me-1"></i>1</span>`);
-        listaCard.find('.d-flex.flex-wrap.gap-2').append(novoContador);
-        console.log('DEBUG: Novo contador criado', { prioridadeAjustada });
-    }
-    
-    // Adicionar handler do checkbox ao novo item
-    const novoItem = listaCard.find(`.lista-item-new`);
-    novoItem.find('.item-checkbox').off('change').on('change', function() {
-        const itemId = $(this).data('item-id');
-        const concluido = $(this).prop('checked');
-        const novoStatus = concluido ? 'concluido' : 'pendente';
-        const itemElement = $(this).closest('.lista-item');
-        const listaCard = itemElement.closest('.lista-card');
-        
-        // Atualizar a classe do item imediatamente para feedback visual
-        if (concluido) {
-            itemElement.addClass('concluido');
-        } else {
-            itemElement.removeClass('concluido');
-        }
-        
-        // Atualizar barra de progresso imediatamente para feedback visual
-        const novaPortcentagem = atualizarProgressoLista(listaCard, concluido, itemId);
-        
-        // Enviar para a API
-        $.ajax({
-            url: `/api/itens/${itemId}/status/`,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ status: novoStatus }),
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
-            },
-            success: function(response) {
-                console.log('DEBUG: Item adicionado - atualização de status', response);
-                
-                // Mostrar mensagem de sucesso discretamente
-                showMessage('success', 'Item atualizado!', true);
-            },
-            error: function(error) {
-                console.error('DEBUG: Erro ao atualizar status do item novo', error);
-                // Reverter a mudança no checkbox e na classe em caso de erro
-                itemElement.find('.item-checkbox').prop('checked', !concluido);
-                if (concluido) {
-                    itemElement.removeClass('concluido');
-                } else {
-                    itemElement.addClass('concluido');
-                }
-                
-                // Reverter a barra de progresso
-                atualizarProgressoLista(listaCard, !concluido, itemId);
-                
-                showMessage('danger', 'Erro ao atualizar status do item.');
-            }
-        });
-    });
-    
-    // Adicionar handler para o botão de remover
-    novoItem.find('.btn-remove-item').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const itemId = $(this).data('item-id');
-        const itemElement = $(this).closest('.lista-item');
-        const itemNome = itemElement.find('.item-nome').text().trim();
-        
-        // Confirmar antes de remover
-        if (confirm(`Tem certeza que deseja remover o item "${itemNome}"?`)) {
-            removerItem(itemId, itemElement);
-        }
-    });
-    
-    console.log('DEBUG: Handler do checkbox adicionado');
-    
-    // Remover a classe lista-item-new após a animação
-    setTimeout(function() {
-        novoItem.removeClass('lista-item-new');
-    }, 2000);
-    
-    // Atualizar estatísticas do dashboard localmente
-    atualizarDashboardStatsLocalmente();
-    
-    console.log('DEBUG: adicionarNovoItemNaUI concluída com sucesso');
-};
-
-// Funções auxiliares para normalização de dados
-function getPrioridadeDisplay(prioridade) {
-    switch (prioridade) {
-        case 'alta': return 'Alta';
-        case 'media': return 'Média';
-        case 'baixa': return 'Baixa';
-        default: return 'Média';
-    }
-}
-
-function getStatusDisplay(status) {
-    switch (status) {
-        case 'pendente': return 'Pendente';
-        case 'em_andamento': return 'Em andamento';
-        case 'concluido': return 'Concluído';
-        case 'adiado': return 'Adiado';
-        case 'cancelado': return 'Cancelado';
-        default: return 'Pendente';
-    }
-}
+    document.head.appendChild(style);
+})();
 </script>
