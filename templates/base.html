@@ -52,34 +52,53 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'app_yummy1:home' %}">
-                                <i class="fas fa-home"></i> Home
+                                <i class="fas fa-home"></i>
+                                <span>Home</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'listas' %}active{% endif %}" href="#">
-                                <i class="fas fa-list-check"></i> Listas
+                                <i class="fas fa-list-check"></i>
+                                <span>Listas</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'priority' %}active{% endif %}" href="#">
-                                <i class="fas fa-star"></i> Prioridades
+                                <i class="fas fa-star"></i>
+                                <span>Prioridades</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'categories' %}active{% endif %}" href="#">
-                                <i class="fas fa-tags"></i> Categorias
+                                <i class="fas fa-tags"></i>
+                                <span>Categorias</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="#">
-                                <i class="fas fa-user-circle"></i> Perfil
+                                <i class="fas fa-user-circle"></i>
+                                <span>Perfil</span>
+                            </a>
+                        </li>
+                        <!-- Item de Logout para Desktop -->
+                        <li class="nav-item d-none d-lg-block">
+                            <a class="nav-link" href="{% url 'app_yummy1:logout' %}">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Sair</span>
                             </a>
                         </li>
                     </ul>
                     
+                    <!-- Botão de logout (visível apenas em modo mobile) -->
+                    <div class="logout-container d-lg-none">
+                        <a href="{% url 'app_yummy1:logout' %}" class="btn btn-logout">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </a>
+                    </div>
+                    
                     <!-- Botão Adicionar Lista (visível apenas em telas grandes) -->
                     <div class="d-none d-lg-block ms-3">
-                        <a href="#" class="btn btn-light btn-sm rounded-pill px-3 shadow-sm">
+                        <a href="#" class="btn btn-light btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
                             <i class="fas fa-plus me-1"></i> Nova Lista
                         </a>
                     </div>
