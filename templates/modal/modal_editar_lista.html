@@ -96,68 +96,135 @@
 <script>
 
 
-// Implementar edição de lista
-$(document).on('click', '.edit-lista', function(e) {
-    e.preventDefault();
+// Função para formatar a data para o formato aceito pelo backend
+function formatarDataParaBackend(dataString) {
+    if (!dataString) return null;
     
-    // Fechar menu de opções
-    $('.lista-action-menu.show').removeClass('show');
+    // Se já for uma data no formato ISO, retorna como está
+    if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dataString;
+    }
+    
+    try {
+        // Converte para objeto Date e formata como YYYY-MM-DD
+        const data = new Date(dataString);
+        if (isNaN(data.getTime())) {
+            return null; // Data inválida
+        }
+        return data.toISOString().split('T')[0];
+    } catch (e) {
+        console.error("Erro ao formatar data:", e);
+        return null;
+    }
+}
+
+// Função para formatar a data do formato backend (dd/mm/yyyy) para input date (yyyy-mm-dd)
+function formatarDataParaInput(dataString) {
+    if (!dataString) return '';
+    
+    // Verifica se a data já está no formato ISO
+    if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dataString;
+    }
+    
+    // Converte de DD/MM/YYYY para YYYY-MM-DD
+    try {
+        const partes = dataString.split('/');
+        if (partes.length === 3) {
+            return `${partes[2]}-${partes[1]}-${partes[0]}`;
+        }
+        return '';
+    } catch (e) {
+        console.error("Erro ao formatar data para input:", e);
+        return '';
+    }
+}
+
+// Implementar edição de lista
+$(document).on('click', '.btn-lista-action.edit-lista, .edit-lista', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Fechar menu de opções se existir
+    if ($('.lista-action-menu.show').length) {
+        $('.lista-action-menu.show').removeClass('show');
+    }
     
     const listaId = $(this).data('lista-id');
     const listaCard = $(this).closest('.lista-card');
     
-    // Preencher o formulário com os dados atuais da lista
-    $('#editar_lista_id').val(listaId);
-    $('#editar_lista_nome').val(listaCard.find('.lista-title').text().trim());
-    $('#editar_lista_objetivo').val(listaCard.find('.lista-objetivo').text().trim());
-    $('#editar_lista_status').val(listaCard.attr('class').split(' ').find(cls => ['pendente', 'em_andamento', 'concluida', 'pausada', 'arquivada'].includes(cls)));
+    // Mostrar indicador de carregamento
+    listaCard.addClass('loading');
+    $('#modalEditarLista').addClass('loading');
     
-    // Data objetivo (se existir)
-    const dataObjetivoText = listaCard.find('.lista-meta span:contains("dias restantes")').text();
-    if (dataObjetivoText) {
-        // Aqui precisaríamos calcular a data objetivo a partir dos dias restantes
-        // Como é complexo, você pode adicionar um atributo data-data-objetivo ao elemento HTML
-        // Para simplificar, deixamos em branco por enquanto
-        $('#editar_lista_data_objetivo').val('');
-    } else {
-        $('#editar_lista_data_objetivo').val('');
-    }
+    // Limpar erros anteriores
+    $('#formEditarLista .invalid-feedback').empty();
+    $('#formEditarLista .is-invalid').removeClass('is-invalid');
     
-    // Ícone atual
-    const iconeClass = listaCard.find('.lista-icon i').attr('class');
-    $('#editar_lista_icone').val(iconeClass);
-    $('.icon-option').removeClass('selected');
-    $(`.icon-option[data-icon="${iconeClass}"]`).addClass('selected');
-    
-    // Cor atual (você precisa ter o valor da cor armazenado)
-    // Para simplificar, deixamos o padrão
-    $('.color-option').removeClass('selected');
-    $('.color-option:first').addClass('selected');
-    $('#editar_lista_cor').val($('.color-option:first').data('color'));
-    
-    // Abrir o modal
-    const editarListaModal = new bootstrap.Modal(document.getElementById('modalEditarLista'));
-    editarListaModal.show();
+    // Buscar dados da lista via API
+    $.ajax({
+        url: `/api/listas/${listaId}/`,
+        type: 'GET',
+        success: function(response) {
+            console.log('DEBUG: Dados da lista obtidos:', response);
+            
+            const lista = response.lista;
+            
+            // Preencher o formulário com os dados da lista
+            $('#editar_lista_id').val(lista.id);
+            $('#editar_lista_nome').val(lista.nome);
+            $('#editar_lista_objetivo').val(lista.objetivo || '');
+            $('#editar_lista_status').val(lista.status);
+            
+            // Formatar a data objetivo para o input date
+            if (lista.data_objetivo) {
+                $('#editar_lista_data_objetivo').val(formatarDataParaInput(lista.data_objetivo));
+            } else {
+                $('#editar_lista_data_objetivo').val('');
+            }
+            
+            // Definir o ícone
+            $('#editar_lista_icone').val(lista.icone);
+            $('#editarIconPreview').attr('class', lista.icone);
+            
+            // Definir a cor
+            $('#editar_lista_cor').val(lista.cor);
+            
+            // Remover indicador de carregamento
+            listaCard.removeClass('loading');
+            $('#modalEditarLista').removeClass('loading');
+            
+            // Abrir o modal
+            const editarListaModal = new bootstrap.Modal(document.getElementById('modalEditarLista'));
+            editarListaModal.show();
+        },
+        error: function(xhr, status, error) {
+            console.error('DEBUG: Erro ao obter dados da lista', { xhr, status, error });
+            
+            // Remover indicador de carregamento
+            listaCard.removeClass('loading');
+            $('#modalEditarLista').removeClass('loading');
+            
+            // Mostrar mensagem de erro
+            showMessage('danger', 'Erro ao carregar dados da lista. Tente novamente.', true);
+        }
+    });
 });
 
-// Seleção de ícone no modal de edição
-$(document).on('click', '.icon-option', function() {
-    $('.icon-option').removeClass('selected');
-    $(this).addClass('selected');
-    $('#editar_lista_icone').val($(this).data('icon'));
+// Atualização do preview de ícone quando o valor do select muda
+$(document).on('change', '#editar_lista_icone', function() {
+    const iconeClass = $(this).val();
+    $('#editarIconPreview').attr('class', iconeClass);
 });
 
-// Seleção de cor no modal de edição
-$(document).on('click', '.color-option', function() {
-    $('.color-option').removeClass('selected');
-    $(this).addClass('selected');
-    $('#editar_lista_cor').val($(this).data('color'));
-});
-
-// Salvar edição da lista
-// Salvar edição da lista (versão corrigida)
-$(document).on('click', '#salvarEdicaoLista', function() {
+// Handler para submissão do formulário de edição
+$('#formEditarLista').on('submit', function(e) {
+    e.preventDefault();
+    
     const listaId = $('#editar_lista_id').val();
+    
+    // Mostrar indicador de carregamento
+    $('#modalEditarLista').addClass('loading');
     
     // Obter dados do formulário
     const formData = {
@@ -178,7 +245,10 @@ $(document).on('click', '#salvarEdicaoLista', function() {
         hasError = true;
     }
     
-    if (hasError) return;
+    if (hasError) {
+        $('#modalEditarLista').removeClass('loading');
+        return;
+    }
     
     // Log para debug
     console.log('DEBUG: Enviando dados para atualização:', formData);
@@ -195,11 +265,14 @@ $(document).on('click', '#salvarEdicaoLista', function() {
         success: function(response) {
             console.log('DEBUG: Resposta de sucesso:', response);
             
+            // Remover indicador de carregamento
+            $('#modalEditarLista').removeClass('loading');
+            
             // Fechar o modal
             bootstrap.Modal.getInstance(document.getElementById('modalEditarLista')).hide();
             
             // Atualizar a lista na interface
-            const listaCard = $(`.lista-card:has([data-lista-id="${listaId}"])`);
+            const listaCard = $(`.lista-card[data-lista-id="${listaId}"]`);
             
             // Atualizar título e objetivo
             listaCard.find('.lista-title').text(formData.nome);
@@ -229,8 +302,8 @@ $(document).on('click', '#salvarEdicaoLista', function() {
             // Atualizar cor se aplicável
             if (formData.cor) {
                 listaCard.data('cor', formData.cor);
-                // Aqui podemos aplicar a cor visualmente se necessário
-                // listaCard.find('.lista-icon').css('background-color', formData.cor);
+                // Atualizar a cor do ícone com a nova cor
+                listaCard.find('.lista-icon').css('background-color', formData.cor);
             }
             
             // Exibir mensagem de sucesso
@@ -242,6 +315,9 @@ $(document).on('click', '#salvarEdicaoLista', function() {
         error: function(xhr, status, error) {
             console.error('DEBUG: Erro ao atualizar lista', { xhr, status, error });
             console.error('DEBUG: Resposta de erro:', xhr.responseText);
+            
+            // Remover indicador de carregamento
+            $('#modalEditarLista').removeClass('loading');
             
             // Tentar obter detalhes do erro
             let errorMessage = 'Erro ao atualizar a lista. Tente novamente.';
@@ -283,5 +359,150 @@ $(document).on('click', '#salvarEdicaoLista', function() {
 
 
 
-
 </script>
+
+<style>
+/* Indicadores de carregamento para modal e card */
+.loading {
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+    z-index: 1001;
+    animation: spinner 1s linear infinite;
+}
+
+/* Indicador de carregamento para o modal */
+#modalEditarLista.loading::before {
+    border-width: 4px;
+    width: 50px;
+    height: 50px;
+}
+
+/* Animação para o spinner */
+@keyframes spinner {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Estilo para o loading pulse em botões */
+.btn.loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: inherit;
+    opacity: 0.65;
+    z-index: 1;
+}
+
+.btn.loading::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-right-color: currentColor;
+    border-radius: 50%;
+    z-index: 2;
+    animation: spinner 0.8s linear infinite;
+}
+
+/* Um pulse visual para quando uma ação de edição foi aplicada (opcional) */
+@keyframes update-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(var(--accent-color-rgb), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0);
+    }
+}
+
+.update-pulse {
+    animation: update-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+/* Melhorar o design do input color */
+input[type="color"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+
+input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+
+/* Estilos para melhorar a visualização do modal durante carregamento */
+#modalEditarLista.loading .modal-content {
+    opacity: 0.8;
+}
+
+#modalEditarLista.loading .modal-body,
+#modalEditarLista.loading .modal-footer {
+    pointer-events: none;
+}
+</style>

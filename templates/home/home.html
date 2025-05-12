@@ -71,7 +71,7 @@
    <div class="col-12">
       {% if listas %}
       {% for lista in listas %}
-      <div class="lista-card {{ lista.status }}">
+      <div class="lista-card {{ lista.status }}" data-lista-id="{{ lista.id }}">
          <div class="lista-card-header">
             <div class="d-flex align-items-start">
                <div class="lista-icon me-2 me-md-3">
