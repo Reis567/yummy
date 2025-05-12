@@ -1114,39 +1114,58 @@ $(document).ready(function() {
     
 
     
-    // Excluir lista
-    $('.delete-lista').on('click', function(e) {
-        e.preventDefault();
-        const listaId = $(this).data('lista-id');
+    // Ajustar o handler para o botão de excluir
+    $(document).on('click', '.btn-lista-action.delete-lista', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const listaId = $(this).data('lista-id');
+    const listaNome = $(this).closest('.lista-card').find('.lista-title').text().trim();
+    
+    // Confirmar exclusão
+    if (confirm(`Tem certeza que deseja excluir a lista "${listaNome}"? Esta ação não pode ser desfeita.`)) {
+        // Adicionar classe de loading
+        $(this).addClass('loading');
         
-        if (confirm('Tem certeza que deseja excluir esta lista? Esta ação não pode ser desfeita.')) {
-            $.ajax({
-                url: `/api/listas/${listaId}/excluir/`,
-                type: 'POST',
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
-                },
-                success: function(response) {
-                    showMessage('success', 'Lista excluída com sucesso!');
-                    // Remover a lista da interface
-                    $(`[data-lista-id="${listaId}"]`).closest('.lista-card').fadeOut(300, function() {
-                        $(this).remove();
-                        
-                        // Se não houver mais listas, mostrar o estado vazio
-                        if ($('.lista-card').length === 0) {
-                            location.reload();
-                        } else {
-                            // Atualizar o dashboard
-                            atualizarDashboardStatsLocalmente();
-                        }
-                    });
-                },
-                error: function(error) {
-                    console.error('DEBUG: Erro ao excluir lista', error);
-                    showMessage('danger', 'Erro ao excluir lista. Tente novamente.');
+        // Fazer a requisição para a API
+        $.ajax({
+            url: `/api/listas/${listaId}/excluir/`,
+            type: 'POST',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+            },
+            success: function(response) {
+                // Mostrar mensagem de sucesso
+                showMessage('success', 'Lista excluída com sucesso!', true);
+                
+                // Animar a remoção da lista
+                const listaCard = $(`.lista-card[data-lista-id="${listaId}"]`);
+                listaCard.addClass('removing-list');
+                
+                // Remover após a animação
+                setTimeout(function() {
+                listaCard.remove();
+                
+                // Se não houver mais listas, mostrar o estado vazio
+                if ($('.lista-card').length === 0) {
+                    location.reload();
+                } else {
+                    // Atualizar o dashboard
+                    atualizarDashboardStatsLocalmente();
                 }
-            });
-        }
+                }, 500);
+            },
+            error: function(error) {
+                console.error('DEBUG: Erro ao excluir lista', error);
+                
+                // Remover classe de loading
+                $(this).removeClass('loading');
+                
+                // Mostrar mensagem de erro
+                showMessage('danger', 'Erro ao excluir lista. Tente novamente.', true);
+            }
+        });
+    }
     });
     
     // Adicionar item à lista

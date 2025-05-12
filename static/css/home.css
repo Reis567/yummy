@@ -821,16 +821,147 @@
 
 
 
-/* Botão de excluir */
-.delete-lista {
-    color: var(--error-color);
-    border-color: var(--error-color);
-    transition: all 0.2s;
+/* Estilo para as ações do footer */
+.lista-footer-actions {
+   position: absolute;
+   bottom: 0;
+   right: 0;
+   display: flex;
+   z-index: 5;
 }
 
-.delete-lista:hover {
-    background-color: var(--error-color);
-    color: white;
+/* Estilo para o botão de excluir similar aos botões do header */
+.btn-lista-action.delete-lista {
+   width: 40px;
+   height: 40px;
+   border: none;
+   background: linear-gradient(135deg, #ff5f5f, #ff0000);
+   color: white;
+   font-size: 1rem;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.2s;
+   opacity: 0.9;
+   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-lista-action.delete-lista:first-child {
+   border-top-left-radius: 12px;
+}
+
+.btn-lista-action.delete-lista:last-child {
+   border-bottom-right-radius: var(--card-border-radius);
+   border-bottom-left-radius: 0;
+   border-top-right-radius: 0;
+}
+
+.btn-lista-action.delete-lista:hover {
+   opacity: 1;
+   transform: translateY(-2px);
+   box-shadow: 0 3px 8px rgba(255, 0, 0, 0.3);
+}
+
+.btn-lista-action.delete-lista:active {
+   transform: translateY(0);
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Tooltip para botões de ação */
+.btn-lista-action {
+   position: relative;
+}
+
+.btn-lista-action::after {
+   content: attr(title);
+   position: absolute;
+   top: -30px;
+   right: 0;
+   background-color: rgba(0, 0, 0, 0.8);
+   color: white;
+   padding: 4px 8px;
+   border-radius: 4px;
+   font-size: 0.75rem;
+   white-space: nowrap;
+   opacity: 0;
+   visibility: hidden;
+   transition: opacity 0.2s ease, visibility 0.2s ease;
+   pointer-events: none;
+}
+
+.btn-lista-action::before {
+   content: '';
+   position: absolute;
+   top: -10px;
+   right: 13px;
+   border-width: 5px;
+   border-style: solid;
+   border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+   opacity: 0;
+   visibility: hidden;
+   transition: opacity 0.2s ease, visibility 0.2s ease;
+   pointer-events: none;
+}
+
+.btn-lista-action:hover::after,
+.btn-lista-action:hover::before {
+   opacity: 1;
+   visibility: visible;
+}
+
+/* Animação para remover lista */
+.removing-list {
+   animation: removing-list 0.5s ease-out forwards;
+   pointer-events: none;
+}
+
+@keyframes removing-list {
+   0% {
+      opacity: 1;
+      transform: translateY(0);
+   }
+   100% {
+      opacity: 0;
+      transform: translateY(20px);
+   }
+}
+
+/* Estado de loading para o botão */
+.btn-lista-action.loading {
+   pointer-events: none;
+}
+
+.btn-lista-action.loading i {
+   display: none;
+}
+
+.btn-lista-action.loading::after {
+   content: '';
+   position: absolute;
+   width: 16px;
+   height: 16px;
+   border: 2px solid rgba(255, 255, 255, 0.3);
+   border-top-color: white;
+   border-radius: 50%;
+   animation: spinner 0.8s linear infinite;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   opacity: 1;
+   visibility: visible;
+}
+
+@keyframes spinner {
+   to {
+      transform: translate(-50%, -50%) rotate(360deg);
+   }
+}
+
+/* Ajuste o rodapé da lista para acomodar o botão de excluir */
+.lista-card-footer {
+   position: relative;
+   padding-bottom: 0; /* Remover padding do footer para o botão ficar colado */
 }
 
 /* Estilos para o modal de edição */

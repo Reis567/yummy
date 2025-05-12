@@ -178,8 +178,8 @@
                     </div>
                 {% endif %}
          </div>
-         <div class="lista-card-footer">
-            <div class="d-flex justify-content-between align-items-center">
+         <div class="lista-card-footer mt-4">
+            <div class="d-flex justify-content-start align-items-center">
                <div class="d-flex flex-wrap gap-2">
                   <!-- Itens de prioridade alta -->
                   {% if lista.itens_alta_prioridade > 0 %}
@@ -200,9 +200,12 @@
                   </span>
                   {% endif %}
                </div>
-               <!-- Botão excluir lista no canto inferior direito -->
-               <button class="btn btn-sm btn-outline-danger delete-lista" data-lista-id="{{ lista.id }}">
-                  <i class="fas fa-trash me-1"></i>Excluir
+            </div>
+            
+            <!-- Botão de excluir no canto -->
+            <div class="lista-footer-actions">
+               <button class="btn-lista-action delete-lista" data-lista-id="{{ lista.id }}" title="Excluir lista">
+                  <i class="fas fa-trash-alt"></i>
                </button>
             </div>
          </div>

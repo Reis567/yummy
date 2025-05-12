@@ -7,5 +7,6 @@ Possibilidade de colocar preço
 Relatorios de quanto está gastando
 IA indicar onde está mais barato 
 fazer favicon personalizado
-cor de lista - ajustar
+cor de lista - ajustar OK
 botao de excluir lista - melhorar 
+conclusão de lista dinamica 
