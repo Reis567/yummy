@@ -894,6 +894,27 @@ $(document).ready(function() {
             });
         }, 300);
     }
+    // Função para formatar a data no formato correto para o backend
+    function formatarDataParaBackend(dataString) {
+        if (!dataString) return null;
+        
+        // Se já for uma data no formato ISO, retorna como está
+        if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return dataString;
+        }
+        
+        try {
+            // Converte para objeto Date e formata como YYYY-MM-DD
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) {
+                return null; // Data inválida
+            }
+            return data.toISOString().split('T')[0];
+        } catch (e) {
+            console.error("Erro ao formatar data:", e);
+            return null;
+        }
+    }
     
     /**
      * Handlers para elementos da UI
@@ -1097,6 +1118,9 @@ $(document).ready(function() {
         // Mostrar o modal
         $('#modalNovoItem').modal('show');
     });
+
+
+
     // Manipulação do menu de opções de lista
     $(document).on('click', '.lista-more-actions', function(e) {
         e.preventDefault();
@@ -1115,6 +1139,173 @@ $(document).ready(function() {
             $('.lista-action-menu.show').removeClass('show');
         }
     });
+
+    // Atualização do preview de ícone no modal de edição
+    $(document).on('change', '#editar_lista_icone', function() {
+        // Remove todas as classes de ícone
+        $('#editarIconPreview').removeClass();
+        // Adiciona a classe selecionada
+        $('#editarIconPreview').addClass($(this).val());
+    });
+
+    // Implementar edição de lista
+    $(document).on('click', '.edit-lista', function(e) {
+        e.preventDefault();
+        
+        // Fechar menu de opções
+        $('.lista-action-menu.show').removeClass('show');
+        
+        const listaId = $(this).data('lista-id');
+        const listaCard = $(this).closest('.lista-card');
+        
+        // Limpar erros anteriores
+        $('#formEditarLista .invalid-feedback').empty();
+        $('#formEditarLista .is-invalid').removeClass('is-invalid');
+        
+        // Preencher o formulário com os dados atuais da lista
+        $('#editar_lista_id').val(listaId);
+        $('#editar_lista_nome').val(listaCard.find('.lista-title').text().trim());
+        $('#editar_lista_objetivo').val(listaCard.find('.lista-objetivo').text().trim());
+        
+        // Status atual
+        const statusAtual = listaCard.attr('class').split(' ').find(cls => 
+            ['pendente', 'em_andamento', 'concluida', 'pausada', 'arquivada'].includes(cls)
+        );
+        $('#editar_lista_status').val(statusAtual);
+        
+        // Tentar obter a data objetivo se existir
+        let dataObjetivo = '';
+        const diasRestantesText = listaCard.find('.lista-meta span:contains("dias restantes")').text();
+        if (diasRestantesText || listaCard.find('.lista-meta span:contains("Vence hoje")').length) {
+            // Se não consigo extrair a data exata, deixo em branco - será tratado pelo backend
+            dataObjetivo = '';
+        }
+        $('#editar_lista_data_objetivo').val(dataObjetivo);
+        
+        // Obter o ícone atual
+        const iconeClass = listaCard.find('.lista-icon i').attr('class');
+        $('#editar_lista_icone').val(iconeClass);
+        $('#editarIconPreview').removeClass().addClass(iconeClass);
+        
+        // Obter cor atual se disponível, ou usar a cor padrão
+        let corAtual = '#F9A27B'; // Cor padrão
+        if (listaCard.data('cor')) {
+            corAtual = listaCard.data('cor');
+        }
+        $('#editar_lista_cor').val(corAtual);
+        
+        // Abrir o modal
+        const editarListaModal = new bootstrap.Modal(document.getElementById('modalEditarLista'));
+        editarListaModal.show();
+    });
+
+    // Handler para o formulário de edição de lista
+    $('#formEditarLista').on('submit', function(e) {
+        e.preventDefault();
+        
+        const listaId = $('#editar_lista_id').val();
+        
+        // Obter dados do formulário
+        const formData = {
+            nome: $('#editar_lista_nome').val(),
+            objetivo: $('#editar_lista_objetivo').val(),
+            status: $('#editar_lista_status').val(),
+            data_objetivo: $('#editar_lista_data_objetivo').val(),
+            icone: $('#editar_lista_icone').val(),
+            cor: $('#editar_lista_cor').val()
+        };
+        
+        // Validar campos obrigatórios
+        let hasError = false;
+        
+        if (!formData.nome) {
+            $('#editar_lista_nome').addClass('is-invalid');
+            $('#editar_lista_nome').next('.invalid-feedback').text('O nome da lista é obrigatório.');
+            hasError = true;
+        }
+        
+        if (hasError) return;
+        
+        // Enviar para a API
+        $.ajax({
+            url: `/api/listas/${listaId}/atualizar/`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', $('input[name="csrfmiddlewaretoken"]').val());
+            },
+            success: function(response) {
+                // Fechar o modal
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarLista')).hide();
+                
+                // Atualizar a lista na interface
+                const listaCard = $(`.lista-card:has([data-lista-id="${listaId}"])`);
+                
+                // Atualizar título e objetivo
+                listaCard.find('.lista-title').text(formData.nome);
+                
+                if (formData.objetivo) {
+                    if (listaCard.find('.lista-objetivo').length) {
+                        listaCard.find('.lista-objetivo').text(formData.objetivo);
+                    } else {
+                        listaCard.find('.lista-title').after(`<p class="lista-objetivo">${formData.objetivo}</p>`);
+                    }
+                } else {
+                    listaCard.find('.lista-objetivo').remove();
+                }
+                
+                // Atualizar ícone
+                listaCard.find('.lista-icon i').attr('class', formData.icone);
+                
+                // Atualizar status
+                listaCard.removeClass('pendente em_andamento concluida pausada arquivada');
+                listaCard.addClass(formData.status);
+                
+                const statusBadge = listaCard.find('.badge-status');
+                statusBadge.removeClass('pendente em_andamento concluida pausada arquivada');
+                statusBadge.addClass(formData.status);
+                statusBadge.text(response.lista.status_display);
+                
+                // Atualizar cor se aplicável
+                if (formData.cor) {
+                    listaCard.data('cor', formData.cor);
+                    // Aqui podemos aplicar a cor visualmente se necessário
+                    // listaCard.find('.lista-icon').css('background-color', formData.cor);
+                }
+                
+                // Exibir mensagem de sucesso
+                showMessage('success', 'Lista atualizada com sucesso!', true);
+                
+                // Atualizar dashboard se necessário
+                atualizarDashboardStatsLocalmente();
+            },
+            error: function(xhr) {
+                console.error('DEBUG: Erro ao atualizar lista', xhr);
+                
+                // Exibir erros de validação
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = xhr.responseJSON.errors;
+                    
+                    // Limpar erros anteriores
+                    $('#formEditarLista .invalid-feedback').empty();
+                    $('#formEditarLista .is-invalid').removeClass('is-invalid');
+                    
+                    // Adicionar novas mensagens de erro
+                    for (const field in errors) {
+                        $(`#editar_lista_${field}`).addClass('is-invalid');
+                        $(`#editar_lista_${field}`).next('.invalid-feedback').text(errors[field]);
+                    }
+                    
+                    showMessage('danger', 'Corrija os erros no formulário.', true);
+                } else {
+                    showMessage('danger', 'Erro ao atualizar a lista. Tente novamente.', true);
+                }
+            }
+        });
+    });
+
+
     
     // Executar o ajuste para dispositivos móveis na inicialização
     adjustForMobile();

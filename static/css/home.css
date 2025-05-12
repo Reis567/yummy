@@ -849,56 +849,6 @@
 }
 
 
-/* Estilo para ações da lista */
-.lista-actions {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    display: flex;
-    gap: 0.4rem;
-}
-
-/* Estilo para o menu de ações adicionais */
-.lista-action-menu {
-    display: none;
-    position: absolute;
-    top: 3rem;
-    right: 1rem;
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    z-index: 10;
-    overflow: hidden;
-    flex-direction: column;
-    width: auto;
-    min-width: 160px;
-}
-
-.lista-action-menu.show {
-    display: flex;
-}
-
-.btn-action {
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-    color: var(--text-dark);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.2s;
-}
-
-.btn-action:hover {
-    background-color: var(--tertiary-color);
-}
-
-.btn-action i {
-    width: 20px;
-    text-align: center;
-}
 
 /* Botão de excluir */
 .delete-lista {
@@ -962,4 +912,78 @@
 #modalEditarLista .icon-option.selected {
     background-color: var(--accent-color);
     color: white;
+}
+
+/* Estilos para os botões de ação no header da lista */
+.lista-header-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    z-index: 5;
+}
+
+.btn-lista-action {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: white;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-lista-action:first-child {
+    border-bottom-left-radius: 12px;
+}
+
+.btn-lista-action:last-child {
+    border-top-right-radius: var(--card-border-radius);
+}
+
+.btn-lista-action:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-lista-action:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-lista-action.add-item {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+}
+
+.btn-lista-action.edit-lista {
+    background: linear-gradient(35deg, var(--bright-accent), var(--accent-color));
+}
+
+/* Ajustes responsivos para telas maiores */
+@media (min-width: 768px) {
+    .btn-lista-action {
+        width: 46px;
+        height: 46px;
+        font-size: 1.1rem;
+    }
+}
+
+/* Adicione margin-top ao primeiro elemento dentro do header para evitar que o texto fique sob os botões */
+.lista-card-header .lista-title {
+    margin-top: 0.35rem;
+    padding-right: 5rem; /* Espaço para os botões */
+}
+
+@media (min-width: 768px) {
+    .lista-card-header .lista-title {
+        margin-top: 0.5rem;
+        padding-right: 6rem; /* Espaço para os botões maiores */
+    }
 }
