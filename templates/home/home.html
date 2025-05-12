@@ -209,12 +209,17 @@
       {% endfor %}
       {% else %}
       <div class="empty-state">
-         <i class="fas fa-clipboard-list"></i>
-         <h4>Nenhuma lista encontrada</h4>
-         <p>Você ainda não criou nenhuma lista de tarefas. Comece criando sua primeira lista para organizar suas atividades.</p>
-         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
-         <i class="fas fa-plus "></i>
+         <div class="empty-state-icon">
+            <i class="fas fa-clipboard-list"></i>
+         </div>
+         <h3 class="empty-state-title">Comece sua organização!</h3>
+         <p class="empty-state-text">Você ainda não tem nenhuma lista de tarefas. Crie sua primeira lista e comece a organizar suas atividades.</p>
+         <button type="button" class="btn-create-first-list" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
+            <i class="fas fa-plus me-2"></i>Criar Lista
          </button>
+         <div class="empty-state-illustration">
+            <img src="{% static 'img/empty-tasks.svg' %}" alt="Lista vazia" onerror="this.style.display='none'">
+         </div>
       </div>
       {% endif %}
    </div>
