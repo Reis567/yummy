@@ -1,5 +1,5 @@
 <!-- Modal Editar Lista -->
-'<!-- Modal Editar Lista -->
+
 <div class="modal fade" id="modalEditarLista" tabindex="-1" aria-labelledby="modalEditarListaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -210,7 +210,71 @@ $(document).on('click', '.btn-lista-action.edit-lista, .edit-lista', function(e)
         }
     });
 });
+// Adicionar esta função para lidar adequadamente com o fechamento do modal
+function fecharModalEditarLista() {
+    // 1. Remover o foco de todos os elementos dentro do modal
+    $('#modalEditarLista button, #modalEditarLista input, #modalEditarLista select, #modalEditarLista textarea').blur();
+    
+    // 2. Definir o foco em um elemento fora do modal
+    document.body.focus();
+    
+    // 3. Pequeno atraso antes de fechar o modal para garantir que o foco foi movido
+    setTimeout(function() {
+        try {
+            const modalElement = document.getElementById('modalEditarLista');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+                
+                // 4. Limpar resíduos após o fechamento
+                $(modalElement).on('hidden.bs.modal', function() {
+                    // Limpar manualmente todos os resíduos do modal
+                    $(document.body).removeClass('modal-open');
+                    $('.modal-backdrop').remove();
+                    $(modalElement).css('display', 'none');
+                    $(document.body).css('overflow', '');
+                    $(document.body).css('padding-right', '');
+                });
+            }
+        } catch (e) {
+            console.warn('Erro ao fechar modal via Bootstrap:', e);
+            // Fallback: fechar usando jQuery
+            $('#modalEditarLista').modal('hide');
+            
+            // Limpar manualmente todos os resíduos
+            setTimeout(function() {
+                $(document.body).removeClass('modal-open');
+                $('.modal-backdrop').remove();
+                $('#modalEditarLista').css('display', 'none');
+                $(document.body).css('overflow', '');
+                $(document.body).css('padding-right', '');
+            }, 300);
+        }
+    }, 50);
+}
 
+// Modificar o manipulador para o botão de fechar o modal
+$(document).on('click', '[data-bs-dismiss="modal"]', function(e) {
+    if ($(this).closest('#modalEditarLista').length) {
+        e.preventDefault();
+        fecharModalEditarLista();
+    }
+});
+
+// Interceptar o evento Escape para também usar nosso método de fechamento personalizado
+$(document).on('keydown', function(e) {
+    if (e.key === 'Escape' && $('#modalEditarLista').hasClass('show')) {
+        e.preventDefault();
+        fecharModalEditarLista();
+    }
+});
+
+// Quando o modal é fechado pelo clique no backdrop, também limpar o foco
+$(document).on('click', '.modal-backdrop', function() {
+    if ($('#modalEditarLista').hasClass('show')) {
+        fecharModalEditarLista();
+    }
+});
 // Atualização do preview de ícone quando o valor do select muda
 $(document).on('change', '#editar_lista_icone', function() {
     const iconeClass = $(this).val();

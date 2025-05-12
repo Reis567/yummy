@@ -8,5 +8,5 @@ Relatorios de quanto está gastando
 IA indicar onde está mais barato 
 fazer favicon personalizado
 cor de lista - ajustar OK
-botao de excluir lista - melhorar 
+botao de excluir lista - melhorar OK
 conclusão de lista dinamica 
