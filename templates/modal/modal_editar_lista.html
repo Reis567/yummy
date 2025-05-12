@@ -268,8 +268,39 @@ $('#formEditarLista').on('submit', function(e) {
             // Remover indicador de carregamento
             $('#modalEditarLista').removeClass('loading');
             
-            // Fechar o modal
-            bootstrap.Modal.getInstance(document.getElementById('modalEditarLista')).hide();
+            // Remover o foco de qualquer elemento dentro do modal
+            $('#modalEditarLista button, #modalEditarLista input, #modalEditarLista select, #modalEditarLista textarea').blur();
+            // Focar em um elemento fora do modal
+            $('body').focus();
+            
+            // Fechar o modal corretamente
+            try {
+                const modalElement = document.getElementById('modalEditarLista');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                    
+                    // Verificar e limpar efeitos residuais após fechamento
+                    $(modalElement).on('hidden.bs.modal', function () {
+                        // Remover classes e estilos residuais
+                        $(document.body).removeClass('modal-open');
+                        $('.modal-backdrop').remove();
+                        $(modalElement).css('display', 'none');
+                        $(document.body).css('overflow', '');
+                        $(document.body).css('padding-right', '');
+                    });
+                }
+            } catch (e) {
+                console.warn('Erro ao fechar modal:', e);
+                // Fallback: Usar jQuery para fechar
+                $('#modalEditarLista').modal('hide');
+                // Limpar manualmente
+                $(document.body).removeClass('modal-open');
+                $('.modal-backdrop').remove();
+                $('#modalEditarLista').css('display', 'none');
+                $(document.body).css('overflow', '');
+                $(document.body).css('padding-right', '');
+            }
             
             // Atualizar a lista na interface
             const listaCard = $(`.lista-card[data-lista-id="${listaId}"]`);
@@ -301,10 +332,19 @@ $('#formEditarLista').on('submit', function(e) {
             
             // Atualizar cor se aplicável
             if (formData.cor) {
+                // Atualizar o atributo data e a propriedade data
+                listaCard.attr('data-cor', formData.cor);
                 listaCard.data('cor', formData.cor);
-                // Atualizar a cor do ícone com a nova cor
-                listaCard.find('.lista-icon').css('background-color', formData.cor);
+                
+                // Aplicar a função dedicada para aplicar todas as cores
+                aplicarCorPersonalizada(listaCard[0]);
             }
+            
+            // Aplicar efeito visual para feedback da atualização
+            listaCard.addClass('update-pulse');
+            setTimeout(function() {
+                listaCard.removeClass('update-pulse');
+            }, 1500);
             
             // Exibir mensagem de sucesso
             showMessage('success', 'Lista atualizada com sucesso!', true);

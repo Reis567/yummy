@@ -6,3 +6,6 @@ Lista compartilhada com outros perfis(Amigos)
 Possibilidade de colocar preço
 Relatorios de quanto está gastando
 IA indicar onde está mais barato 
+fazer favicon personalizado
+cor de lista - ajustar
+botao de excluir lista - melhorar 
