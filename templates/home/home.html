@@ -76,41 +76,46 @@
          <div class="lista-card-header">
             <div class="d-flex align-items-start">
                <div class="lista-icon me-2 me-md-3">
-                     <i class="{{ lista.icone }}"></i>
+                  <i class="{{ lista.icone }}"></i>
                </div>
-               <div class="pe-2 pe-md-3 flex-grow-1"> <!-- Reduzi padding e adicionei flex-grow-1 -->
-                     <h3 class="lista-title">{{ lista.nome }}</h3>
-                     {% if lista.objetivo %}
-                     <p class="lista-objetivo">{{ lista.objetivo }}</p>
-                     {% endif %}
-                     <div class="lista-meta">
-                        <span>
-                           <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
-                        </span>
-                        {% if lista.data_objetivo %}
-                        <span>
-                           <i class="fas fa-hourglass-half me-1"></i> 
-                           {% if lista.dias_restantes < 0 %}
-                           <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
-                           {% elif lista.dias_restantes == 0 %}
-                           <span class="text-warning">Vence hoje</span>
-                           {% else %}
-                           <span>{{ lista.dias_restantes }} dias restantes</span>
-                           {% endif %}
-                        </span>
+               <div class="pe-2 pe-md-3 flex-grow-1">
+                  <h3 class="lista-title">{{ lista.nome }}</h3>
+                  {% if lista.objetivo %}
+                  <p class="lista-objetivo">{{ lista.objetivo }}</p>
+                  {% endif %}
+                  <div class="lista-meta">
+                     <span>
+                        <i class="fas fa-calendar-alt me-1"></i> Criada em {{ lista.data_criacao|date:"d/m/Y" }}
+                     </span>
+                     {% if lista.data_objetivo %}
+                     <span>
+                        <i class="fas fa-hourglass-half me-1"></i> 
+                        {% if lista.dias_restantes < 0 %}
+                        <span class="text-danger">Atrasada ({{ lista.dias_restantes|abs }} dias)</span>
+                        {% elif lista.dias_restantes == 0 %}
+                        <span class="text-warning">Vence hoje</span>
+                        {% else %}
+                        <span>{{ lista.dias_restantes }} dias restantes</span>
                         {% endif %}
-                        <span class="badge badge-status {{ lista.status }}">{{ lista.get_status_display }}</span>
-                     </div>
+                     </span>
+                     {% endif %}
+                     <span class="badge badge-status {{ lista.status }}">{{ lista.get_status_display }}</span>
+                  </div>
                </div>
             </div>
+            
+            <!-- Botão de toggle collapse -->
+            <button class="btn-lista-toggle" data-lista-id="{{ lista.id }}" title="Expandir/Recolher">
+               <i class="fas fa-chevron-down"></i>
+            </button>
             
             <!-- Botões de ação no topo -->
             <div class="lista-header-actions">
                <button class="btn-lista-action add-item" data-lista-id="{{ lista.id }}" title="Adicionar item">
-                     <i class="fas fa-plus"></i>
+                  <i class="fas fa-plus"></i>
                </button>
                <button class="btn-lista-action edit-lista" data-lista-id="{{ lista.id }}" title="Editar lista">
-                     <i class="fas fa-edit"></i>
+                  <i class="fas fa-edit"></i>
                </button>
             </div>
             
@@ -126,7 +131,17 @@
             </script>
             {% endif %}
          </div>
-         <div class="lista-card-body">
+         
+         <!-- Barra de progresso sempre visível (mesmo quando colapsado) -->
+         <div class="lista-progress-preview">
+            <span class="text-muted small">{{ lista.itens.count }} itens | {{ lista.porcentagem_concluida }}% concluído</span>
+            <div class="progress" style="width: 60%;">
+               <div class="progress-bar" role="progressbar" style="width: {{ lista.porcentagem_concluida }}%" 
+                  aria-valuenow="{{ lista.porcentagem_concluida }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+         </div>
+         
+         <div class="lista-card-body collapse" id="lista-body-{{ lista.id }}">
             <div class="d-flex justify-content-between align-items-center mb-2">
                <h6 class="m-0">Itens</h6>
                <span class="text-muted small">{{ lista.itens.count }} total | {{ lista.porcentagem_concluida }}% concluído</span>
@@ -163,11 +178,7 @@
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
-
-                            <!-- Este trecho será substituído no template home.html -->
                         {% endfor %}
-                        
-
                     </div>
                 {% else %}
                     <div class="text-center py-3">
@@ -253,4 +264,44 @@
 <!--JS DA HOME-->
 {% block extra_js %}
     {% include "js_includes/js_home.html" %}
+    
+    <!-- JavaScript para funcionalidade de Collapse -->
+    <script>
+    // Funcionalidade de toggle para expandir/recolher listas
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar todas as listas como fechadas
+        const toggleButtons = document.querySelectorAll('.btn-lista-toggle');
+        
+        toggleButtons.forEach(button => {
+            const listaId = button.getAttribute('data-lista-id');
+            const bodyElement = document.getElementById(`lista-body-${listaId}`);
+            
+            // Adicionar evento de clique
+            button.addEventListener('click', function() {
+                // Toggle da classe active no botão
+                this.classList.toggle('active');
+                
+                // Toggle da classe show no corpo
+                bodyElement.classList.toggle('show');
+                
+                // Salvar estado no localStorage
+                const isExpanded = bodyElement.classList.contains('show');
+                localStorage.setItem(`lista-expanded-${listaId}`, isExpanded);
+            });
+            
+            // Verificar se há um estado salvo no localStorage
+            const savedState = localStorage.getItem(`lista-expanded-${listaId}`);
+            if (savedState === 'true') {
+                button.classList.add('active');
+                bodyElement.classList.add('show');
+            }
+        });
+        
+        // Por padrão, abrir a primeira lista na página (opcional)
+        if (toggleButtons.length > 0 && !localStorage.getItem('lista-expanded-init')) {
+            toggleButtons[0].click();
+            localStorage.setItem('lista-expanded-init', 'true');
+        }
+    });
+    </script>
 {% endblock %}

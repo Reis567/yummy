@@ -1395,3 +1395,84 @@
     }
 
 
+
+
+    /* Botão de toggle para expandir/recolher lista */
+.btn-lista-toggle {
+   position: absolute;
+   top: 50%;
+   transform: translateY(-50%);
+   right: 100px; /* Posição ajustada para não conflitar com os outros botões */
+   width: 32px;
+   height: 32px;
+   border: none;
+   background-color: var(--tertiary-color);
+   color: var(--text-muted);
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.3s;
+   z-index: 5;
+}
+
+.btn-lista-toggle:hover {
+   background-color: var(--secondary-color);
+   color: var(--text-dark);
+}
+
+.btn-lista-toggle i {
+   transition: transform 0.3s;
+}
+
+.btn-lista-toggle.active i {
+   transform: rotate(180deg);
+}
+
+/* Estilos para o corpo colapsável */
+.lista-card-body {
+   max-height: 0;
+   overflow: hidden;
+   transition: max-height 0.5s ease, padding 0.3s ease;
+   padding: 0 var(--card-padding);
+}
+
+.lista-card-body.show {
+   max-height: 1000px; /* Valor alto o suficiente para acomodar o conteúdo */
+   padding: var(--card-padding);
+}
+
+/* Estilos para o indicador de progresso sempre visível */
+.lista-progress-preview {
+   padding: 0.5rem var(--card-padding);
+   background-color: var(--tertiary-color);
+   border-top: 1px solid var(--secondary-color);
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+}
+
+/* Ajuste para a altura do card quando colapsado */
+.lista-card {
+   transition: margin-bottom 0.3s ease;
+}
+
+@media (max-width: 768px) {
+   .btn-lista-toggle {
+      right: 90px;
+      width: 28px;
+      height: 28px;
+   }
+}
+
+/* Ajuste a classe collapse para não depender do Bootstrap */
+.collapse {
+   display: block;
+}
+
+/* Remova o padding da lista-card-body original para evitar duplicação */
+.lista-card-body:not(.show) {
+   padding-top: 0;
+   padding-bottom: 0;
+}
