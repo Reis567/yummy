@@ -134,7 +134,7 @@
          
          <!-- Barra de progresso sempre visível (mesmo quando colapsado) -->
          <div class="lista-progress-preview">
-            <span class="text-muted small">{{ lista.itens.count }} itens | {{ lista.porcentagem_concluida }}% concluído</span>
+            <span class="text-muted small">{{ lista.itens.count }} itens | {{ lista.porcentagem_concluida }}% </span>
             <div class="progress" style="width: 60%;">
                <div class="progress-bar" role="progressbar" style="width: {{ lista.porcentagem_concluida }}%" 
                   aria-valuenow="{{ lista.porcentagem_concluida }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -142,13 +142,8 @@
          </div>
          
          <div class="lista-card-body collapse" id="lista-body-{{ lista.id }}">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-               <h6 class="m-0">Itens</h6>
-               <span class="text-muted small">{{ lista.itens.count }} total | {{ lista.porcentagem_concluida }}% concluído</span>
-            </div>
-            <div class="progress mb-3">
-               <div class="progress-bar" role="progressbar" style="width: {{ lista.porcentagem_concluida }}%" aria-valuenow="{{ lista.porcentagem_concluida }}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
+
+
                 {% if lista.itens.count > 0 %}
                     <div class="lista-itens">
                         {% for item in lista.itens.all %}
@@ -265,43 +260,5 @@
 {% block extra_js %}
     {% include "js_includes/js_home.html" %}
     
-    <!-- JavaScript para funcionalidade de Collapse -->
-    <script>
-    // Funcionalidade de toggle para expandir/recolher listas
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar todas as listas como fechadas
-        const toggleButtons = document.querySelectorAll('.btn-lista-toggle');
-        
-        toggleButtons.forEach(button => {
-            const listaId = button.getAttribute('data-lista-id');
-            const bodyElement = document.getElementById(`lista-body-${listaId}`);
-            
-            // Adicionar evento de clique
-            button.addEventListener('click', function() {
-                // Toggle da classe active no botão
-                this.classList.toggle('active');
-                
-                // Toggle da classe show no corpo
-                bodyElement.classList.toggle('show');
-                
-                // Salvar estado no localStorage
-                const isExpanded = bodyElement.classList.contains('show');
-                localStorage.setItem(`lista-expanded-${listaId}`, isExpanded);
-            });
-            
-            // Verificar se há um estado salvo no localStorage
-            const savedState = localStorage.getItem(`lista-expanded-${listaId}`);
-            if (savedState === 'true') {
-                button.classList.add('active');
-                bodyElement.classList.add('show');
-            }
-        });
-        
-        // Por padrão, abrir a primeira lista na página (opcional)
-        if (toggleButtons.length > 0 && !localStorage.getItem('lista-expanded-init')) {
-            toggleButtons[0].click();
-            localStorage.setItem('lista-expanded-init', 'true');
-        }
-    });
-    </script>
+
 {% endblock %}

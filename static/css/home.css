@@ -1402,7 +1402,7 @@
    position: absolute;
    top: 50%;
    transform: translateY(-50%);
-   right: 100px; /* Posição ajustada para não conflitar com os outros botões */
+   right: 30px; /* Posição ajustada para não conflitar com os outros botões */
    width: 32px;
    height: 32px;
    border: none;
@@ -1460,7 +1460,7 @@
 
 @media (max-width: 768px) {
    .btn-lista-toggle {
-      right: 90px;
+      right: 30px;
       width: 28px;
       height: 28px;
    }
@@ -1476,3 +1476,5 @@
    padding-top: 0;
    padding-bottom: 0;
 }
+
+

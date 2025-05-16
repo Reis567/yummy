@@ -1391,5 +1391,39 @@ $(document).ready(function() {
     });
 });
 
-
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar todas as listas como fechadas
+        const toggleButtons = document.querySelectorAll('.btn-lista-toggle');
+        
+        toggleButtons.forEach(button => {
+            const listaId = button.getAttribute('data-lista-id');
+            const bodyElement = document.getElementById(`lista-body-${listaId}`);
+            
+            // Adicionar evento de clique
+            button.addEventListener('click', function() {
+                // Toggle da classe active no botão
+                this.classList.toggle('active');
+                
+                // Toggle da classe show no corpo
+                bodyElement.classList.toggle('show');
+                
+                // Salvar estado no localStorage
+                const isExpanded = bodyElement.classList.contains('show');
+                localStorage.setItem(`lista-expanded-${listaId}`, isExpanded);
+            });
+            
+            // Verificar se há um estado salvo no localStorage
+            const savedState = localStorage.getItem(`lista-expanded-${listaId}`);
+            if (savedState === 'true') {
+                button.classList.add('active');
+                bodyElement.classList.add('show');
+            }
+        });
+        
+        // Por padrão, abrir a primeira lista na página (opcional)
+        if (toggleButtons.length > 0 && !localStorage.getItem('lista-expanded-init')) {
+            toggleButtons[0].click();
+            localStorage.setItem('lista-expanded-init', 'true');
+        }
+    });
 </script>
