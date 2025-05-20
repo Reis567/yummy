@@ -65,6 +65,13 @@ class Item(models.Model):
         ('cancelado', 'Cancelado'),
     ]
     
+    TIPO_ITEM_CHOICES = [
+        ('tarefa', 'Tarefa Regular'),
+        ('compra', 'Item de Compra'),
+        ('local', 'Local para Visitar'),
+        ('outro', 'Outro'),
+    ]
+    
     lista = models.ForeignKey(Lista, on_delete=models.CASCADE, related_name='itens')
     nome = models.CharField(max_length=200)
     descricao = models.TextField(blank=True, null=True)
@@ -75,6 +82,24 @@ class Item(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
     ordem = models.PositiveIntegerField(default=0, help_text="Ordem de exibição do item na lista")
     notas = models.TextField(blank=True, null=True, help_text="Notas adicionais sobre o item")
+    
+    # Campos para geolocalizacao e APIs de IAs
+    tipo_item = models.CharField(max_length=20, choices=TIPO_ITEM_CHOICES, default='tarefa', 
+                                help_text="Tipo do item para facilitar a integração com APIs")
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, 
+                                 help_text="Latitude do local associado ao item")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True,
+                                  help_text="Longitude do local associado ao item")
+    preco = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True,
+                              help_text="Preço estimado ou desejado do item/serviço")
+    moeda = models.CharField(max_length=3, default='BRL', blank=True, null=True,
+                           help_text="Código da moeda (ex: BRL, USD)")
+    endereco = models.CharField(max_length=255, blank=True, null=True,
+                              help_text="Endereço completo associado ao item")
+    ultimo_check_preco = models.DateTimeField(blank=True, null=True,
+                                            help_text="Data da última verificação de preços pela API")
+    raio_busca = models.PositiveIntegerField(default=5000, blank=True, null=True,
+                                          help_text="Raio de busca em metros para locais próximos")
     
     class Meta:
         ordering = ['ordem', 'prioridade', 'data_hora', 'data_criacao']
@@ -113,6 +138,10 @@ class Item(models.Model):
         
         # Se for mais de 24h
         return f"{delta.days} dias"
+    
+    def tem_geolocalizacao(self):
+        """Verifica se o item possui geolocalização definida"""
+        return self.latitude is not None and self.longitude is not None
 
 
 class Categoria(models.Model):
