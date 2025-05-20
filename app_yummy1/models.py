@@ -144,6 +144,35 @@ class Item(models.Model):
         return self.latitude is not None and self.longitude is not None
 
 
+
+class LocalSugerido(models.Model):
+    """Modelo para armazenar locais sugeridos pela API para um item"""
+    
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='locais_sugeridos')
+    nome = models.CharField(max_length=200)
+    endereco = models.CharField(max_length=255)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    preco = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    distancia = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True,
+                                  help_text="Distância em metros do local de referência")
+    detalhes = models.JSONField(blank=True, null=True, 
+                              help_text="Dados adicionais fornecidos pela API (horários, avaliações, etc)")
+    data_consulta = models.DateTimeField(auto_now_add=True)
+    selecionado = models.BooleanField(default=False, 
+                                    help_text="Indica se este local foi selecionado pelo usuário")
+    
+    class Meta:
+        ordering = ['distancia', '-data_consulta']
+        verbose_name = 'Local Sugerido'
+        verbose_name_plural = 'Locais Sugeridos'
+    
+    def __str__(self):
+        return f"{self.nome} ({self.distancia}m de {self.item.nome})"
+    
+
+
+
 class Categoria(models.Model):
     """Modelo para categorizar listas ou itens"""
     nome = models.CharField(max_length=50)
