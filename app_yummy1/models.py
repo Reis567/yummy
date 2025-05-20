@@ -172,6 +172,33 @@ class LocalSugerido(models.Model):
     
 
 
+class ConsultaAPI(models.Model):
+    """Modelo para registrar consultas à API externa"""
+    
+    TIPO_API_CHOICES = [
+        ('claude', 'Claude AI'),
+        ('maps', 'Google Maps'),
+        ('precos', 'API de Preços'),
+        ('outro', 'Outra API'),
+    ]
+    
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='consultas_api')
+    tipo_api = models.CharField(max_length=20, choices=TIPO_API_CHOICES, default='claude')
+    parametros = models.JSONField(help_text="Parâmetros enviados na consulta")
+    resposta = models.JSONField(blank=True, null=True, help_text="Resposta recebida da API")
+    data_consulta = models.DateTimeField(auto_now_add=True)
+    sucesso = models.BooleanField(default=True)
+    erro = models.TextField(blank=True, null=True)
+    tempo_resposta = models.PositiveIntegerField(help_text="Tempo de resposta em ms", blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-data_consulta']
+        verbose_name = 'Consulta API'
+        verbose_name_plural = 'Consultas API'
+    
+    def __str__(self):
+        return f"Consulta {self.tipo_api} para {self.item.nome} em {self.data_consulta}"
+
 
 class Categoria(models.Model):
     """Modelo para categorizar listas ou itens"""
