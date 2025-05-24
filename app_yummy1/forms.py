@@ -3,6 +3,7 @@ from django.utils import timezone
 from .models import Lista, Item, Categoria, SubItem
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from decimal import Decimal, InvalidOperation
 
 class RegisterForm(UserCreationForm):
     """Formulário personalizado para criação de usuários"""
@@ -82,21 +83,94 @@ class ListaForm(forms.ModelForm):
     
     class Meta:
         model = Lista
-        fields = ['nome', 'objetivo', 'data_objetivo', 'status', 'cor', 'icone']
+        fields = ['nome', 'objetivo', 'data_objetivo', 'status', 'cor', 'icone', 
+                 'endereco', 'latitude', 'longitude']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome da lista'}),
-            'objetivo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Objetivo desta lista'}),
-            'data_objetivo': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Nome da lista'
+            }),
+            'objetivo': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placeholder': 'Objetivo desta lista'
+            }),
+            'data_objetivo': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date'
+            }),
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'cor': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
-            'icone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Classe do ícone (ex: fas fa-tasks)'}),
+            'cor': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'type': 'color'
+            }),
+            'icone': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Classe do ícone (ex: fas fa-tasks)'
+            }),
+            'endereco': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Endereço relacionado à lista'
+            }),
+            'latitude': forms.HiddenInput(),
+            'longitude': forms.HiddenInput(),
         }
     
     def clean_data_objetivo(self):
+        """Valida a data objetivo"""
         data_objetivo = self.cleaned_data.get('data_objetivo')
         if data_objetivo and data_objetivo < timezone.now().date():
             raise forms.ValidationError("A data objetivo não pode ser no passado!")
         return data_objetivo
+    
+    def clean_nome(self):
+        """Valida o nome da lista"""
+        nome = self.cleaned_data.get('nome')
+        if not nome or not nome.strip():
+            raise forms.ValidationError("O nome da lista é obrigatório!")
+        return nome.strip()
+    
+    def clean_latitude(self):
+        """Valida a latitude"""
+        latitude = self.cleaned_data.get('latitude')
+        if latitude is not None:
+            try:
+                lat_decimal = Decimal(str(latitude))
+                if not (-90 <= lat_decimal <= 90):
+                    raise forms.ValidationError("Latitude deve estar entre -90 e 90 graus.")
+                return lat_decimal
+            except (InvalidOperation, TypeError, ValueError):
+                raise forms.ValidationError("Latitude inválida.")
+        return latitude
+    
+    def clean_longitude(self):
+        """Valida a longitude"""
+        longitude = self.cleaned_data.get('longitude')
+        if longitude is not None:
+            try:
+                lng_decimal = Decimal(str(longitude))
+                if not (-180 <= lng_decimal <= 180):
+                    raise forms.ValidationError("Longitude deve estar entre -180 e 180 graus.")
+                return lng_decimal
+            except (InvalidOperation, TypeError, ValueError):
+                raise forms.ValidationError("Longitude inválida.")
+        return longitude
+    
+    def clean(self):
+        """Validação cruzada dos campos"""
+        cleaned_data = super().clean()
+        latitude = cleaned_data.get('latitude')
+        longitude = cleaned_data.get('longitude')
+        endereco = cleaned_data.get('endereco')
+        
+        # Se há coordenadas, ambas devem estar presentes
+        if (latitude is not None and longitude is None) or (longitude is not None and latitude is None):
+            raise forms.ValidationError("Se definir coordenadas, tanto latitude quanto longitude são obrigatórias.")
+        
+        # Se há coordenadas mas não há endereço, é válido (usuário pode ter clicado no mapa)
+        # Se há endereço mas não há coordenadas, também é válido (usuário pode ter digitado apenas)
+        
+        return cleaned_data
 
 
 class ItemForm(forms.ModelForm):

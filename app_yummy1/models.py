@@ -22,6 +22,14 @@ class Lista(models.Model):
     cor = models.CharField(max_length=20, blank=True, default='#FF4500', help_text="Cor de destaque da lista")
     icone = models.CharField(max_length=50, blank=True, default='fas fa-tasks', help_text="Classe de ícone FontAwesome")
     
+    # NOVOS CAMPOS DE GEOLOCALIZAÇÃO
+    endereco = models.CharField(max_length=255, blank=True, null=True, 
+                               help_text="Endereço relacionado à lista")
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, 
+                                 help_text="Latitude da localização da lista")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True,
+                                  help_text="Longitude da localização da lista")
+    
     class Meta:
         ordering = ['-data_criacao']
         verbose_name = 'Lista'
@@ -46,6 +54,22 @@ class Lista(models.Model):
             
         hoje = timezone.now().date()
         return (self.data_objetivo - hoje).days
+    
+    def tem_geolocalizacao(self):
+        """Verifica se a lista possui geolocalização definida"""
+        return self.latitude is not None and self.longitude is not None
+    
+    def itens_alta_prioridade(self):
+        """Retorna a quantidade de itens de alta prioridade"""
+        return self.itens.filter(prioridade='alta').count()
+    
+    def itens_media_prioridade(self):
+        """Retorna a quantidade de itens de média prioridade"""
+        return self.itens.filter(prioridade='media').count()
+    
+    def itens_baixa_prioridade(self):
+        """Retorna a quantidade de itens de baixa prioridade"""
+        return self.itens.filter(prioridade='baixa').count()
 
 
 class Item(models.Model):

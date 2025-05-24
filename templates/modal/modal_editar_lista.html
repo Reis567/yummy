@@ -1,7 +1,6 @@
-<!-- Modal Editar Lista -->
-
+<!-- Modal Editar Lista com Geolocalização -->
 <div class="modal fade" id="modalEditarLista" tabindex="-1" aria-labelledby="modalEditarListaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalEditarListaLabel">
@@ -9,75 +8,140 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
+            
             <form id="formEditarLista">
                 {% csrf_token %}
                 <input type="hidden" id="editar_lista_id" name="id">
+                
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="editar_lista_nome" class="form-label">Nome da Lista*</label>
-                        <input type="text" class="form-control" id="editar_lista_nome" name="nome" placeholder="Ex: Lista de Compras" required>
-                        <div class="invalid-feedback"></div>
-                    </div>
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-tabs" id="editarListaTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="dados-tab" data-bs-toggle="tab" data-bs-target="#dados-pane" type="button" role="tab">
+                                <i class="fas fa-info-circle me-1"></i>Dados Gerais
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="localizacao-tab" data-bs-toggle="tab" data-bs-target="#localizacao-pane" type="button" role="tab">
+                                <i class="fas fa-map-marker-alt me-1"></i>Localização
+                            </button>
+                        </li>
+                    </ul>
                     
-                    <div class="mb-3">
-                        <label for="editar_lista_objetivo" class="form-label">Objetivo</label>
-                        <textarea class="form-control" id="editar_lista_objetivo" name="objetivo" rows="2" placeholder="Descreva o objetivo desta lista"></textarea>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editar_lista_data_objetivo" class="form-label">Data para conclusão</label>
-                        <input type="date" class="form-control" id="editar_lista_data_objetivo" name="data_objetivo">
-                        <div class="form-text">Opcional: data limite para concluir esta lista</div>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <label for="editar_lista_status" class="form-label">Status</label>
-                            <select class="form-select" id="editar_lista_status" name="status">
-                                <option value="pendente">Pendente</option>
-                                <option value="em_andamento">Em andamento</option>
-                                <option value="concluida">Concluída</option>
-                                <option value="pausada">Pausada</option>
-                                <option value="arquivada">Arquivada</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
+                    <div class="tab-content" id="editarListaTabContent">
+                        <!-- Aba Dados Gerais -->
+                        <div class="tab-pane fade show active" id="dados-pane" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="editar_lista_nome" class="form-label">Nome da Lista*</label>
+                                <input type="text" class="form-control" id="editar_lista_nome" name="nome" placeholder="Ex: Lista de Compras" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editar_lista_objetivo" class="form-label">Objetivo</label>
+                                <textarea class="form-control" id="editar_lista_objetivo" name="objetivo" rows="2" placeholder="Descreva o objetivo desta lista"></textarea>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editar_lista_data_objetivo" class="form-label">Data para conclusão</label>
+                                <input type="date" class="form-control" id="editar_lista_data_objetivo" name="data_objetivo">
+                                <div class="form-text">Opcional: data limite para concluir esta lista</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="editar_lista_status" class="form-label">Status</label>
+                                    <select class="form-select" id="editar_lista_status" name="status">
+                                        <option value="em_andamento">Em andamento</option>
+                                        <option value="concluida">Concluída</option>
+                                        <option value="pausada">Pausada</option>
+                                        <option value="arquivada">Arquivada</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                
+                                <div class="col-6">
+                                    <label for="editar_lista_cor" class="form-label">Cor da Lista</label>
+                                    <input type="color" class="form-control form-control-color w-100" id="editar_lista_cor" name="cor" value="#F9A27B">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editar_lista_icone" class="form-label">Ícone</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i id="editarIconPreview" class="fas fa-shopping-basket"></i></span>
+                                    <select class="form-select" id="editar_lista_icone" name="icone">
+                                        <option value="fas fa-shopping-basket">Cesta de Compras</option>
+                                        <option value="fas fa-utensils">Utensílios</option>
+                                        <option value="fas fa-tasks">Tarefas</option>
+                                        <option value="fas fa-briefcase">Trabalho</option>
+                                        <option value="fas fa-home">Casa</option>
+                                        <option value="fas fa-graduation-cap">Estudos</option>
+                                        <option value="fas fa-heart">Saúde</option>
+                                        <option value="fas fa-users">Família</option>
+                                        <option value="fas fa-dumbbell">Exercícios</option>
+                                        <option value="fas fa-plane">Viagens</option>
+                                        <option value="fas fa-gift">Presentes</option>
+                                        <option value="fas fa-book">Livros</option>
+                                        <option value="fas fa-film">Filmes</option>
+                                        <option value="fas fa-gamepad">Jogos</option>
+                                        <option value="fas fa-car">Transporte</option>
+                                        <option value="fas fa-money-bill-wave">Finanças</option>
+                                        <option value="fas fa-map-marker-alt">Localização</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="col-6">
-                            <label for="editar_lista_cor" class="form-label">Cor da Lista</label>
-                            <input type="color" class="form-control form-control-color w-100" id="editar_lista_cor" name="cor" value="#F9A27B">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editar_lista_icone" class="form-label">Ícone</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i id="editarIconPreview" class="fas fa-shopping-basket"></i></span>
-                            <select class="form-select" id="editar_lista_icone" name="icone">
-                                <option value="fas fa-shopping-basket">Cesta de Compras</option>
-                                <option value="fas fa-utensils">Utensílios</option>
-                                <option value="fas fa-tasks">Tarefas</option>
-                                <option value="fas fa-briefcase">Trabalho</option>
-                                <option value="fas fa-home">Casa</option>
-                                <option value="fas fa-graduation-cap">Estudos</option>
-                                <option value="fas fa-heart">Saúde</option>
-                                <option value="fas fa-users">Família</option>
-                                <option value="fas fa-dumbbell">Exercícios</option>
-                                <option value="fas fa-plane">Viagens</option>
-                                <option value="fas fa-gift">Presentes</option>
-                                <option value="fas fa-book">Livros</option>
-                                <option value="fas fa-film">Filmes</option>
-                                <option value="fas fa-gamepad">Jogos</option>
-                                <option value="fas fa-car">Transporte</option>
-                                <option value="fas fa-money-bill-wave">Finanças</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
+                        <!-- Aba Localização -->
+                        <div class="tab-pane fade" id="localizacao-pane" role="tabpanel">
+                            <!-- Status da Geolocalização -->
+                            <div id="geo-status-container"></div>
+                            
+                            <!-- Campo de Endereço -->
+                            <div class="mb-3">
+                                <label for="editar_lista_endereco" class="form-label">Endereço</label>
+                                <div class="endereco-group">
+                                    <input type="text" class="form-control" id="editar_lista_endereco" name="endereco" placeholder="Digite o endereço ou local relacionado a esta lista">
+                                    <button type="button" class="btn-search-address" id="btnBuscarEndereco" title="Buscar no mapa">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Opcional: endereço relacionado à lista (ex: supermercado, escritório)</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Controles do Mapa -->
+                            <div class="map-controls">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-map-action" id="btnLocalizarMe">
+                                        <i class="fas fa-crosshairs me-1"></i>Minha Localização
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-map-action" id="btnLimparMapa">
+                                        <i class="fas fa-eraser me-1"></i>Limpar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Container do Mapa -->
+                            <div id="map-container"></div>
+                            
+                            <!-- Exibição das Coordenadas -->
+                            <div id="coordinates-display" class="coordinates-display" style="display: none;">
+                                <strong>Coordenadas:</strong> <span id="coordinates-text"></span>
+                            </div>
+                            
+                            <!-- Campos ocultos para latitude e longitude -->
+                            <input type="hidden" id="editar_lista_latitude" name="latitude">
+                            <input type="hidden" id="editar_lista_longitude" name="longitude">
                         </div>
                     </div>
                 </div>
+                
                 <div class="modal-footer">
                     <div class="d-flex flex-column flex-sm-row w-100">
                         <button type="button" class="btn btn-outline-secondary mb-2 mb-sm-0 me-sm-2 order-2 order-sm-1" data-bs-dismiss="modal">Cancelar</button>
@@ -91,25 +155,595 @@
     </div>
 </div>
 
+<!-- CSS Adicional para Geolocalização -->
+<style>
+    /* Variáveis CSS para cores consistentes */
+    :root {
+        --primary-color: #FF6B6B;
+        --accent-color: #F9A27B;
+        --accent-color-rgb: 249, 162, 123;
+        --tertiary-color: #FFF5F5;
+        --secondary-color: #F0F0F0;
+        --text-dark: #2C3E50;
+        --text-muted: #7F8C8D;
+        --success-color: #2ECC71;
+        --warning-color: #F39C12;
+        --error-color: #E74C3C;
+        --error-color-rgb: 231, 76, 60;
+    }
 
+    /* Estilo do mapa */
+    #map-container {
+        height: 200px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid var(--secondary-color);
+        transition: border-color 0.3s ease;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        position: relative;
+    }
+
+    #map-container:hover {
+        border-color: var(--accent-color);
+    }
+
+    #map-container.map-loaded {
+        background-color: transparent;
+    }
+
+    .map-controls {
+        margin-bottom: 15px;
+    }
+
+    .btn-map-action {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    /* Estilo para o campo de endereço */
+    .endereco-group {
+        position: relative;
+    }
+
+    .btn-search-address {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: var(--accent-color);
+        color: white;
+        border-radius: 4px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 5;
+    }
+
+    .btn-search-address:hover {
+        background: var(--primary-color);
+        transform: translateY(-50%) scale(1.05);
+    }
+
+    /* Indicadores de status de geolocalização */
+    .geo-status {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border: 1px solid transparent;
+    }
+
+    .geo-status.success {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: var(--success-color);
+        border-color: rgba(46, 204, 113, 0.3);
+    }
+
+    .geo-status.warning {
+        background-color: rgba(243, 156, 18, 0.1);
+        color: var(--warning-color);
+        border-color: rgba(243, 156, 18, 0.3);
+    }
+
+    .geo-status.error {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: var(--error-color);
+        border-color: rgba(231, 76, 60, 0.3);
+    }
+
+    /* Coordenadas */
+    .coordinates-display {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        background-color: var(--tertiary-color);
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-top: 15px;
+        border: 1px solid var(--secondary-color);
+    }
+
+    /* Abas para organizar o modal */
+    .nav-tabs {
+        border-bottom: 2px solid var(--secondary-color);
+        margin-bottom: 0;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        border-radius: 0;
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: var(--primary-color);
+        background-color: rgba(var(--accent-color-rgb), 0.1);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        border-bottom: 3px solid var(--primary-color);
+        background: none;
+        font-weight: 700;
+    }
+
+    .tab-content {
+        padding-top: 20px;
+    }
+
+    /* Modal responsivo */
+    @media (min-width: 768px) {
+        .modal-lg {
+            max-width: 800px;
+        }
+        
+        #map-container {
+            height: 250px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .modal-dialog {
+            margin: 10px;
+            max-width: calc(100% - 20px);
+        }
+        
+        #map-container {
+            height: 180px;
+        }
+        
+        .nav-tabs .nav-link {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    /* Indicadores de carregamento - mantendo os existentes */
+    .loading {
+        position: relative;
+    }
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.8);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loading::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        border-top-color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
+        z-index: 1001;
+        animation: spinner 1s linear infinite;
+    }
+
+    #modalEditarLista.loading::before {
+        border-width: 4px;
+        width: 50px;
+        height: 50px;
+    }
+
+    @keyframes spinner {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Melhorar design do input color - mantendo os existentes */
+    input[type="color"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 40px;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+
+    input[type="color"]::-moz-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+
+    /* Animação de atualização - mantendo a existente */
+    @keyframes update-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(var(--accent-color-rgb), 0); }
+        100% { box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0); }
+    }
+
+    .update-pulse {
+        animation: update-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+    }
+
+    /* Melhorias de loading para modal */
+    #modalEditarLista.loading .modal-content {
+        opacity: 0.9;
+    }
+
+    #modalEditarLista.loading .modal-body,
+    #modalEditarLista.loading .modal-footer {
+        pointer-events: none;
+    }
+
+    /* Estado inicial do mapa */
+    #map-container::before {
+        content: '🗺️ Clique em "Minha Localização" ou "Buscar" para carregar o mapa';
+        text-align: center;
+        opacity: 0.7;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 80%;
+    }
+
+    #map-container.map-loaded::before {
+        display: none;
+    }
+
+    #editarListaTabs li button {
+        color: var(--primary-color) !important;
+    }
+
+    /* Indicador visual de localização no card */
+    .location-indicator {
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+</style>
 
 <script>
+$(document).ready(function() {
+    // Verificar se Leaflet já está carregado
+    if (typeof L === 'undefined') {
+        // Carregar Leaflet CSS
+        if (!$('link[href*="leaflet"]').length) {
+            $('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">').appendTo('head');
+        }
+        
+        // Carregar Leaflet JS
+        $.getScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js')
+            .done(function() {
+                console.log('Leaflet carregado com sucesso');
+                window.leafletLoaded = true;
+            })
+            .fail(function() {
+                console.error('Erro ao carregar Leaflet');
+            });
+    } else {
+        window.leafletLoaded = true;
+    }
+});
 
+// Objeto para gerenciar o mapa e suas funcionalidades
+const MapaEditarLista = {
+    // Propriedades
+    mapa: null,
+    marcador: null,
+    inicializado: false,
+    
+    // Coordenadas padrão (Maricá, RJ)
+    coordenadasPadrao: {
+        lat: -22.9194,
+        lng: -42.8186,
+        zoom: 12
+    },
+    
+    // Métodos
+    init: function() {
+        if (this.inicializado || typeof L === 'undefined') {
+            return false;
+        }
+        
+        try {
+            console.log('Inicializando mapa...');
+            
+            // Criar mapa
+            this.mapa = L.map('map-container').setView(
+                [this.coordenadasPadrao.lat, this.coordenadasPadrao.lng], 
+                this.coordenadasPadrao.zoom
+            );
+            
+            // Adicionar camada de tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(this.mapa);
+            
+            // Marcar container como carregado
+            $('#map-container').addClass('map-loaded');
+            
+            // Adicionar evento de clique
+            this.mapa.on('click', (e) => {
+                this.definirLocalizacao(e.latlng.lat, e.latlng.lng);
+            });
+            
+            this.inicializado = true;
+            this.mostrarStatus('success', 'Mapa carregado! Clique no mapa para definir a localização.');
+            
+            return true;
+            
+        } catch (error) {
+            console.error('Erro ao inicializar mapa:', error);
+            this.mostrarStatus('error', 'Erro ao carregar o mapa. Verifique sua conexão.');
+            return false;
+        }
+    },
+    
+    definirLocalizacao: function(lat, lng, endereco = null) {
+        if (!this.mapa) {
+            console.error('Mapa não inicializado');
+            return;
+        }
+        
+        // Remover marcador anterior
+        if (this.marcador) {
+            this.mapa.removeLayer(this.marcador);
+        }
+        
+        // Adicionar novo marcador
+        this.marcador = L.marker([lat, lng]).addTo(this.mapa);
+        this.mapa.setView([lat, lng], 15);
+        
+        // Atualizar campos do formulário
+        $('#editar_lista_latitude').val(lat.toFixed(6));
+        $('#editar_lista_longitude').val(lng.toFixed(6));
+        
+        // Exibir coordenadas
+        $('#coordinates-text').text(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        $('#coordinates-display').show();
+        
+        // Atualizar endereço se fornecido
+        if (endereco) {
+            $('#editar_lista_endereco').val(endereco);
+        }
+        
+        this.mostrarStatus('success', 'Localização definida com sucesso!');
+    },
+    
+    obterLocalizacaoAtual: function() {
+        if (!navigator.geolocation) {
+            this.mostrarStatus('error', 'Geolocalização não é suportada pelo seu navegador.');
+            return;
+        }
+        
+        // Inicializar mapa se necessário
+        if (!this.inicializado) {
+            const inicializado = this.init();
+            if (!inicializado) {
+                setTimeout(() => this.obterLocalizacaoAtual(), 1000);
+                return;
+            }
+        }
+        
+        this.mostrarStatus('warning', 'Obtendo sua localização...');
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                this.definirLocalizacao(lat, lng);
+                
+                // Tentar obter endereço via geocoding reverso
+                this.geocodingReverso(lat, lng);
+            },
+            (error) => {
+                let message = 'Erro ao obter localização.';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Permissão de localização negada pelo usuário.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'Localização indisponível no momento.';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'Tempo limite para obter localização.';
+                        break;
+                }
+                this.mostrarStatus('error', message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000
+            }
+        );
+    },
+    
+    buscarEndereco: function() {
+        const endereco = $('#editar_lista_endereco').val().trim();
+        if (!endereco) {
+            this.mostrarStatus('warning', 'Digite um endereço para buscar.');
+            return;
+        }
+        
+        // Inicializar mapa se necessário
+        if (!this.inicializado) {
+            const inicializado = this.init();
+            if (!inicializado) {
+                setTimeout(() => this.buscarEndereco(), 1000);
+                return;
+            }
+        }
+        
+        this.mostrarStatus('warning', 'Buscando endereço...');
+        
+        // Adicionar bias para a região do Rio de Janeiro
+        const query = encodeURIComponent(`${endereco}, Rio de Janeiro, Brasil`);
+        
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const result = data[0];
+                    const lat = parseFloat(result.lat);
+                    const lng = parseFloat(result.lon);
+                    this.definirLocalizacao(lat, lng, result.display_name);
+                } else {
+                    this.mostrarStatus('error', 'Endereço não encontrado. Tente ser mais específico.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro na busca:', error);
+                this.mostrarStatus('error', 'Erro ao buscar endereço. Verifique sua conexão.');
+            });
+    },
+    
+    geocodingReverso: function(lat, lng) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.display_name) {
+                    $('#editar_lista_endereco').val(data.display_name);
+                }
+            })
+            .catch(error => {
+                console.log('Não foi possível obter o endereço automaticamente:', error);
+            });
+    },
+    
+    limparLocalizacao: function() {
+        if (this.marcador && this.mapa) {
+            this.mapa.removeLayer(this.marcador);
+            this.marcador = null;
+        }
+        
+        $('#editar_lista_latitude').val('');
+        $('#editar_lista_longitude').val('');
+        $('#editar_lista_endereco').val('');
+        $('#coordinates-display').hide();
+        
+        this.mostrarStatus('warning', 'Localização removida.');
+    },
+    
+    carregarDados: function(lista) {
+        if (lista.endereco) {
+            $('#editar_lista_endereco').val(lista.endereco);
+        }
+        
+        if (lista.latitude && lista.longitude) {
+            $('#editar_lista_latitude').val(lista.latitude);
+            $('#editar_lista_longitude').val(lista.longitude);
+            
+            // Se o mapa estiver inicializado, mostrar a localização
+            if (this.inicializado) {
+                this.definirLocalizacao(parseFloat(lista.latitude), parseFloat(lista.longitude), lista.endereco);
+            }
+            
+            // Mostrar coordenadas
+            $('#coordinates-text').text(`${lista.latitude}, ${lista.longitude}`);
+            $('#coordinates-display').show();
+            
+            this.mostrarStatus('success', 'Localização carregada da lista.');
+        }
+    },
+    
+    mostrarStatus: function(tipo, mensagem) {
+        const container = $('#geo-status-container');
+        const icone = tipo === 'success' ? 'check-circle' : tipo === 'warning' ? 'exclamation-triangle' : 'times-circle';
+        
+        container.html(`
+            <div class="geo-status ${tipo}">
+                <i class="fas fa-${icone} me-2"></i>
+                ${mensagem}
+            </div>
+        `);
+    },
+    
+    resetar: function() {
+        // Limpar dados de geolocalização
+        $('#geo-status-container').empty();
+        $('#coordinates-display').hide();
+        
+        // Resetar mapa se necessário
+        if (this.marcador && this.mapa) {
+            this.mapa.removeLayer(this.marcador);
+            this.marcador = null;
+        }
+        
+        // Limpar campos
+        $('#editar_lista_endereco').val('');
+        $('#editar_lista_latitude').val('');
+        $('#editar_lista_longitude').val('');
+    }
+};
 
-// Função para formatar a data para o formato aceito pelo backend
+// Funções de formatação de data (mantendo as existentes)
 function formatarDataParaBackend(dataString) {
     if (!dataString) return null;
     
-    // Se já for uma data no formato ISO, retorna como está
     if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
         return dataString;
     }
     
     try {
-        // Converte para objeto Date e formata como YYYY-MM-DD
         const data = new Date(dataString);
         if (isNaN(data.getTime())) {
-            return null; // Data inválida
+            return null;
         }
         return data.toISOString().split('T')[0];
     } catch (e) {
@@ -118,16 +752,13 @@ function formatarDataParaBackend(dataString) {
     }
 }
 
-// Função para formatar a data do formato backend (dd/mm/yyyy) para input date (yyyy-mm-dd)
 function formatarDataParaInput(dataString) {
     if (!dataString) return '';
     
-    // Verifica se a data já está no formato ISO
     if (dataString.match(/^\d{4}-\d{2}-\d{2}$/)) {
         return dataString;
     }
     
-    // Converte de DD/MM/YYYY para YYYY-MM-DD
     try {
         const partes = dataString.split('/');
         if (partes.length === 3) {
@@ -140,7 +771,118 @@ function formatarDataParaInput(dataString) {
     }
 }
 
-// Implementar edição de lista
+// Event Listeners
+$(document).ready(function() {
+    // Inicializar mapa quando a aba de localização for clicada
+    $(document).on('click', '#localizacao-tab', function() {
+        setTimeout(function() {
+            if (window.leafletLoaded || typeof L !== 'undefined') {
+                MapaEditarLista.init();
+            } else {
+                console.log('Aguardando carregamento do Leaflet...');
+                setTimeout(function() {
+                    MapaEditarLista.init();
+                }, 500);
+            }
+        }, 150);
+    });
+    
+    // Botão de localização atual
+    $(document).on('click', '#btnLocalizarMe', function(e) {
+        e.preventDefault();
+        MapaEditarLista.obterLocalizacaoAtual();
+    });
+    
+    // Botão de buscar endereço
+    $(document).on('click', '#btnBuscarEndereco', function(e) {
+        e.preventDefault();
+        MapaEditarLista.buscarEndereco();
+    });
+    
+    // Botão de limpar
+    $(document).on('click', '#btnLimparMapa', function(e) {
+        e.preventDefault();
+        MapaEditarLista.limparLocalizacao();
+    });
+    
+    // Enter no campo de endereço
+    $(document).on('keypress', '#editar_lista_endereco', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            MapaEditarLista.buscarEndereco();
+        }
+    });
+    
+    // Preview do ícone
+    $(document).on('change', '#editar_lista_icone', function() {
+        const iconeClass = $(this).val();
+        $('#editarIconPreview').attr('class', iconeClass);
+    });
+    
+    // Resetar dados do mapa quando o modal for fechado
+    $('#modalEditarLista').on('hidden.bs.modal', function() {
+        MapaEditarLista.resetar();
+        // Voltar para a primeira aba
+        $('#dados-tab').tab('show');
+        
+        // Limpar resíduos e corrigir problemas de acessibilidade
+        setTimeout(function() {
+            // Remover classes e estilos residuais
+            $(document.body).removeClass('modal-open');
+            $('.modal-backdrop').remove();
+            $('#modalEditarLista').css('display', 'none').removeAttr('style');
+            $(document.body).css('overflow', '').css('padding-right', '');
+            
+            // Remover aria-hidden que pode causar conflitos
+            $('#modalEditarLista').removeAttr('aria-hidden');
+        }, 100);
+    });
+    
+    // Handler específico para o botão de fechar
+    $(document).on('click', '[data-bs-dismiss="modal"]', function(e) {
+        if ($(this).closest('#modalEditarLista').length) {
+            // Remover foco do botão antes de fechar
+            $(this).blur();
+            
+            // Pequeno delay para garantir que o blur aconteça
+            setTimeout(function() {
+                // Focar em um elemento seguro fora do modal
+                document.body.focus();
+            }, 10);
+        }
+    });
+    
+    // Handler para tecla Escape
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && $('#modalEditarLista').hasClass('show')) {
+            // Remover foco de qualquer elemento focado dentro do modal
+            $('#modalEditarLista button, #modalEditarLista input, #modalEditarLista select, #modalEditarLista textarea').blur();
+            
+            // Focar no body
+            document.body.focus();
+            
+            // Pequeno delay antes de fechar
+            setTimeout(function() {
+                const modalElement = document.getElementById('modalEditarLista');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }, 10);
+        }
+    });
+    
+    // Handler para clique no backdrop
+    $(document).on('click', function(e) {
+        if ($(e.target).hasClass('modal') && $(e.target).attr('id') === 'modalEditarLista') {
+            // Remover foco de elementos dentro do modal
+            $('#modalEditarLista button, #modalEditarLista input, #modalEditarLista select, #modalEditarLista textarea').blur();
+            document.body.focus();
+        }
+    });
+});
+
+// Handler de edição de lista (integrado com as funcionalidades existentes)
 $(document).on('click', '.btn-lista-action.edit-lista, .edit-lista', function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -161,6 +903,9 @@ $(document).on('click', '.btn-lista-action.edit-lista, .edit-lista', function(e)
     $('#formEditarLista .invalid-feedback').empty();
     $('#formEditarLista .is-invalid').removeClass('is-invalid');
     
+    // Resetar dados do mapa
+    MapaEditarLista.resetar();
+    
     // Buscar dados da lista via API
     $.ajax({
         url: `/api/listas/${listaId}/`,
@@ -170,31 +915,32 @@ $(document).on('click', '.btn-lista-action.edit-lista, .edit-lista', function(e)
             
             const lista = response.lista;
             
-            // Preencher o formulário com os dados da lista
+            // Preencher formulário com dados gerais
             $('#editar_lista_id').val(lista.id);
             $('#editar_lista_nome').val(lista.nome);
             $('#editar_lista_objetivo').val(lista.objetivo || '');
             $('#editar_lista_status').val(lista.status);
             
-            // Formatar a data objetivo para o input date
+            // Formatar data objetivo
             if (lista.data_objetivo) {
                 $('#editar_lista_data_objetivo').val(formatarDataParaInput(lista.data_objetivo));
             } else {
                 $('#editar_lista_data_objetivo').val('');
             }
             
-            // Definir o ícone
+            // Definir ícone e cor
             $('#editar_lista_icone').val(lista.icone);
             $('#editarIconPreview').attr('class', lista.icone);
-            
-            // Definir a cor
             $('#editar_lista_cor').val(lista.cor);
+            
+            // Carregar dados de geolocalização
+            MapaEditarLista.carregarDados(lista);
             
             // Remover indicador de carregamento
             listaCard.removeClass('loading');
             $('#modalEditarLista').removeClass('loading');
             
-            // Abrir o modal
+            // Abrir modal
             const editarListaModal = new bootstrap.Modal(document.getElementById('modalEditarLista'));
             editarListaModal.show();
         },
@@ -206,82 +952,14 @@ $(document).on('click', '.btn-lista-action.edit-lista, .edit-lista', function(e)
             $('#modalEditarLista').removeClass('loading');
             
             // Mostrar mensagem de erro
-            showMessage('danger', 'Erro ao carregar dados da lista. Tente novamente.', true);
+            if (typeof showMessage === 'function') {
+                showMessage('danger', 'Erro ao carregar dados da lista. Tente novamente.', true);
+            }
         }
     });
 });
-// Adicionar esta função para lidar adequadamente com o fechamento do modal
-function fecharModalEditarLista() {
-    // 1. Remover o foco de todos os elementos dentro do modal
-    $('#modalEditarLista button, #modalEditarLista input, #modalEditarLista select, #modalEditarLista textarea').blur();
-    
-    // 2. Definir o foco em um elemento fora do modal
-    document.body.focus();
-    
-    // 3. Pequeno atraso antes de fechar o modal para garantir que o foco foi movido
-    setTimeout(function() {
-        try {
-            const modalElement = document.getElementById('modalEditarLista');
-            const modalInstance = bootstrap.Modal.getInstance(modalElement);
-            if (modalInstance) {
-                modalInstance.hide();
-                
-                // 4. Limpar resíduos após o fechamento
-                $(modalElement).on('hidden.bs.modal', function() {
-                    // Limpar manualmente todos os resíduos do modal
-                    $(document.body).removeClass('modal-open');
-                    $('.modal-backdrop').remove();
-                    $(modalElement).css('display', 'none');
-                    $(document.body).css('overflow', '');
-                    $(document.body).css('padding-right', '');
-                });
-            }
-        } catch (e) {
-            console.warn('Erro ao fechar modal via Bootstrap:', e);
-            // Fallback: fechar usando jQuery
-            $('#modalEditarLista').modal('hide');
-            
-            // Limpar manualmente todos os resíduos
-            setTimeout(function() {
-                $(document.body).removeClass('modal-open');
-                $('.modal-backdrop').remove();
-                $('#modalEditarLista').css('display', 'none');
-                $(document.body).css('overflow', '');
-                $(document.body).css('padding-right', '');
-            }, 300);
-        }
-    }, 50);
-}
 
-// Modificar o manipulador para o botão de fechar o modal
-$(document).on('click', '[data-bs-dismiss="modal"]', function(e) {
-    if ($(this).closest('#modalEditarLista').length) {
-        e.preventDefault();
-        fecharModalEditarLista();
-    }
-});
-
-// Interceptar o evento Escape para também usar nosso método de fechamento personalizado
-$(document).on('keydown', function(e) {
-    if (e.key === 'Escape' && $('#modalEditarLista').hasClass('show')) {
-        e.preventDefault();
-        fecharModalEditarLista();
-    }
-});
-
-// Quando o modal é fechado pelo clique no backdrop, também limpar o foco
-$(document).on('click', '.modal-backdrop', function() {
-    if ($('#modalEditarLista').hasClass('show')) {
-        fecharModalEditarLista();
-    }
-});
-// Atualização do preview de ícone quando o valor do select muda
-$(document).on('change', '#editar_lista_icone', function() {
-    const iconeClass = $(this).val();
-    $('#editarIconPreview').attr('class', iconeClass);
-});
-
-// Handler para submissão do formulário de edição
+// Handler de submissão do formulário
 $('#formEditarLista').on('submit', function(e) {
     e.preventDefault();
     
@@ -290,20 +968,28 @@ $('#formEditarLista').on('submit', function(e) {
     // Mostrar indicador de carregamento
     $('#modalEditarLista').addClass('loading');
     
-    // Obter dados do formulário
+    // Coletar dados do formulário
     const formData = {
         nome: $('#editar_lista_nome').val(),
-        objetivo: $('#editar_lista_objetivo').val() || null, // Enviar null se estiver vazio
+        objetivo: $('#editar_lista_objetivo').val() || null,
         status: $('#editar_lista_status').val(),
         data_objetivo: formatarDataParaBackend($('#editar_lista_data_objetivo').val()),
         icone: $('#editar_lista_icone').val(),
-        cor: $('#editar_lista_cor').val()
+        cor: $('#editar_lista_cor').val(),
+        // Dados de geolocalização
+        endereco: $('#editar_lista_endereco').val() || null,
+        latitude: $('#editar_lista_latitude').val() || null,
+        longitude: $('#editar_lista_longitude').val() || null
     };
     
     // Validar campos obrigatórios
     let hasError = false;
     
-    if (!formData.nome) {
+    // Limpar erros anteriores
+    $('#formEditarLista .invalid-feedback').empty();
+    $('#formEditarLista .is-invalid').removeClass('is-invalid');
+    
+    if (!formData.nome.trim()) {
         $('#editar_lista_nome').addClass('is-invalid');
         $('#editar_lista_nome').next('.invalid-feedback').text('O nome da lista é obrigatório.');
         hasError = true;
@@ -314,10 +1000,9 @@ $('#formEditarLista').on('submit', function(e) {
         return;
     }
     
-    // Log para debug
     console.log('DEBUG: Enviando dados para atualização:', formData);
     
-    // Enviar para a API
+    // Enviar para API
     $.ajax({
         url: `/api/listas/${listaId}/atualizar/`,
         type: 'POST',
@@ -332,41 +1017,18 @@ $('#formEditarLista').on('submit', function(e) {
             // Remover indicador de carregamento
             $('#modalEditarLista').removeClass('loading');
             
-            // Remover o foco de qualquer elemento dentro do modal
-            $('#modalEditarLista button, #modalEditarLista input, #modalEditarLista select, #modalEditarLista textarea').blur();
-            // Focar em um elemento fora do modal
-            $('body').focus();
-            
-            // Fechar o modal corretamente
-            try {
+            // Fechar modal
+            if (typeof fecharModalEditarLista === 'function') {
+                fecharModalEditarLista();
+            } else {
                 const modalElement = document.getElementById('modalEditarLista');
                 const modalInstance = bootstrap.Modal.getInstance(modalElement);
                 if (modalInstance) {
                     modalInstance.hide();
-                    
-                    // Verificar e limpar efeitos residuais após fechamento
-                    $(modalElement).on('hidden.bs.modal', function () {
-                        // Remover classes e estilos residuais
-                        $(document.body).removeClass('modal-open');
-                        $('.modal-backdrop').remove();
-                        $(modalElement).css('display', 'none');
-                        $(document.body).css('overflow', '');
-                        $(document.body).css('padding-right', '');
-                    });
                 }
-            } catch (e) {
-                console.warn('Erro ao fechar modal:', e);
-                // Fallback: Usar jQuery para fechar
-                $('#modalEditarLista').modal('hide');
-                // Limpar manualmente
-                $(document.body).removeClass('modal-open');
-                $('.modal-backdrop').remove();
-                $('#modalEditarLista').css('display', 'none');
-                $(document.body).css('overflow', '');
-                $(document.body).css('padding-right', '');
             }
             
-            // Atualizar a lista na interface
+            // Atualizar interface
             const listaCard = $(`.lista-card[data-lista-id="${listaId}"]`);
             
             // Atualizar título e objetivo
@@ -386,44 +1048,62 @@ $('#formEditarLista').on('submit', function(e) {
             listaCard.find('.lista-icon i').attr('class', formData.icone);
             
             // Atualizar status
-            listaCard.removeClass('pendente em_andamento concluida pausada arquivada');
+            listaCard.removeClass('em_andamento concluida pausada arquivada');
             listaCard.addClass(formData.status);
             
             const statusBadge = listaCard.find('.badge-status');
-            statusBadge.removeClass('pendente em_andamento concluida pausada arquivada');
+            statusBadge.removeClass('em_andamento concluida pausada arquivada');
             statusBadge.addClass(formData.status);
             statusBadge.text(response.lista.status_display);
             
-            // Atualizar cor se aplicável
+            // Atualizar cor
             if (formData.cor) {
-                // Atualizar o atributo data e a propriedade data
                 listaCard.attr('data-cor', formData.cor);
                 listaCard.data('cor', formData.cor);
                 
-                // Aplicar a função dedicada para aplicar todas as cores
-                aplicarCorPersonalizada(listaCard[0]);
+                if (typeof aplicarCorPersonalizada === 'function') {
+                    aplicarCorPersonalizada(listaCard[0]);
+                }
             }
             
-            // Aplicar efeito visual para feedback da atualização
+            // Indicador de localização
+            if (formData.latitude && formData.longitude) {
+                // Adicionar indicador de localização se não existir
+                if (listaCard.find('.location-indicator').length === 0) {
+                    listaCard.find('.lista-meta').append(`
+                        <span class="location-indicator" title="Esta lista possui localização definida">
+                            <i class="fas fa-map-marker-alt me-1"></i>Localizada
+                        </span>
+                    `);
+                }
+            } else {
+                // Remover indicador se não há localização
+                listaCard.find('.location-indicator').remove();
+            }
+            
+            // Efeito visual de atualização
             listaCard.addClass('update-pulse');
             setTimeout(function() {
                 listaCard.removeClass('update-pulse');
             }, 1500);
             
-            // Exibir mensagem de sucesso
-            showMessage('success', 'Lista atualizada com sucesso!', true);
+            // Mensagem de sucesso
+            if (typeof showMessage === 'function') {
+                showMessage('success', 'Lista atualizada com sucesso!', true);
+            }
             
-            // Atualizar dashboard se necessário
-            atualizarDashboardStatsLocalmente();
+            // Atualizar dashboard
+            if (typeof atualizarDashboardStatsLocalmente === 'function') {
+                atualizarDashboardStatsLocalmente();
+            }
         },
         error: function(xhr, status, error) {
             console.error('DEBUG: Erro ao atualizar lista', { xhr, status, error });
-            console.error('DEBUG: Resposta de erro:', xhr.responseText);
             
             // Remover indicador de carregamento
             $('#modalEditarLista').removeClass('loading');
             
-            // Tentar obter detalhes do erro
+            // Processar erros
             let errorMessage = 'Erro ao atualizar a lista. Tente novamente.';
             let errors = {};
             
@@ -452,161 +1132,42 @@ $('#formEditarLista').on('submit', function(e) {
                     $(fieldId).next('.invalid-feedback').text(errors[field]);
                 }
                 
-                showMessage('danger', 'Corrija os erros no formulário.', true);
+                if (typeof showMessage === 'function') {
+                    showMessage('danger', 'Corrija os erros no formulário.', true);
+                }
             } else {
-                showMessage('danger', errorMessage, true);
+                if (typeof showMessage === 'function') {
+                    showMessage('danger', errorMessage, true);
+                }
             }
         }
     });
 });
 
+// Função auxiliar para validar coordenadas
+function isValidCoordinate(lat, lng) {
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
 
+// Função auxiliar para formatar coordenadas
+function formatCoordinates(lat, lng) {
+    if (!isValidCoordinate(lat, lng)) return 'Coordenadas inválidas';
+    
+    const latDir = lat >= 0 ? 'N' : 'S';
+    const lngDir = lng >= 0 ? 'L' : 'O';
+    
+    return `${Math.abs(lat).toFixed(6)}°${latDir}, ${Math.abs(lng).toFixed(6)}°${lngDir}`;
+}
 
-
+// Debug: Verificar se Leaflet foi carregado
+$(window).on('load', function() {
+    setTimeout(function() {
+        if (typeof L !== 'undefined') {
+            console.log('Leaflet carregado e pronto para uso');
+            window.leafletLoaded = true;
+        } else {
+            console.warn('Leaflet não foi carregado corretamente');
+        }
+    }, 1000);
+});
 </script>
-
-<style>
-/* Indicadores de carregamento para modal e card */
-.loading {
-    position: relative;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.7);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.loading::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    border-top-color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-    z-index: 1001;
-    animation: spinner 1s linear infinite;
-}
-
-/* Indicador de carregamento para o modal */
-#modalEditarLista.loading::before {
-    border-width: 4px;
-    width: 50px;
-    height: 50px;
-}
-
-/* Animação para o spinner */
-@keyframes spinner {
-    0% {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-    100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
-
-/* Estilo para o loading pulse em botões */
-.btn.loading {
-    position: relative;
-    pointer-events: none;
-    color: transparent !important;
-}
-
-.btn.loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: inherit;
-    opacity: 0.65;
-    z-index: 1;
-}
-
-.btn.loading::before {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border: 2px solid transparent;
-    border-top-color: currentColor;
-    border-right-color: currentColor;
-    border-radius: 50%;
-    z-index: 2;
-    animation: spinner 0.8s linear infinite;
-}
-
-/* Um pulse visual para quando uma ação de edição foi aplicada (opcional) */
-@keyframes update-pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(var(--accent-color-rgb), 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0);
-    }
-}
-
-.update-pulse {
-    animation: update-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-
-/* Melhorar o design do input color */
-input[type="color"] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 40px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-input[type="color"]::-webkit-color-swatch {
-    border: none;
-    border-radius: 4px;
-    padding: 0;
-}
-
-input[type="color"]::-moz-color-swatch {
-    border: none;
-    border-radius: 4px;
-    padding: 0;
-}
-
-/* Estilos para melhorar a visualização do modal durante carregamento */
-#modalEditarLista.loading .modal-content {
-    opacity: 0.8;
-}
-
-#modalEditarLista.loading .modal-body,
-#modalEditarLista.loading .modal-footer {
-    pointer-events: none;
-}
-</style>

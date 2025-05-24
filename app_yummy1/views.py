@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import *
-
+from django.contrib.auth.decorators import login_required
 
 
 ### AUTH
@@ -188,6 +188,7 @@ def listar_listas(request):
     return JsonResponse({'listas': resultado})
 
 
+
 def obter_lista(request, lista_id):
     """
     Obtém os detalhes de uma lista específica em formato JSON
@@ -218,6 +219,15 @@ def obter_lista(request, lista_id):
             'esta_atrasado': item.esta_atrasado(),
             'tempo_restante': item.tempo_restante(),
             'ordem': item.ordem,
+            # Novos campos de geolocalização para itens
+            'endereco': item.endereco,
+            'latitude': str(item.latitude) if item.latitude else None,
+            'longitude': str(item.longitude) if item.longitude else None,
+            'tem_geolocalizacao': item.tem_geolocalizacao(),
+            'tipo_item': item.tipo_item,
+            'tipo_item_display': item.get_tipo_item_display(),
+            'preco': str(item.preco) if item.preco else None,
+            'moeda': item.moeda,
         })
     
     # Calcula porcentagem de conclusão
@@ -226,6 +236,11 @@ def obter_lista(request, lista_id):
     porcentagem = 0
     if total_itens > 0:
         porcentagem = int((itens_concluidos / total_itens) * 100)
+    
+    # Contadores de prioridade
+    itens_alta = sum(1 for item in itens if item.prioridade == 'alta')
+    itens_media = sum(1 for item in itens if item.prioridade == 'media')
+    itens_baixa = sum(1 for item in itens if item.prioridade == 'baixa')
     
     # Prepara os dados da lista
     lista_dict = {
@@ -237,15 +252,29 @@ def obter_lista(request, lista_id):
         'cor': lista.cor,
         'icone': lista.icone,
         'data_criacao': lista.data_criacao.strftime('%d/%m/%Y'),
-        'data_objetivo': lista.data_objetivo.strftime('%d/%m/%Y') if lista.data_objetivo else None,
+        'data_objetivo': lista.data_objetivo.strftime('%Y-%m-%d') if lista.data_objetivo else None,  # Formato para input date
+        'data_objetivo_display': lista.data_objetivo.strftime('%d/%m/%Y') if lista.data_objetivo else None,  # Formato para exibição
         'dias_restantes': lista.dias_restantes(),
         'porcentagem': porcentagem,
+        'porcentagem_concluida': porcentagem,  # Alias para compatibilidade
         'total_itens': total_itens,
         'itens_concluidos': itens_concluidos,
         'itens': itens_lista,
+        # Novos campos de geolocalização da lista
+        'endereco': lista.endereco,
+        'latitude': str(lista.latitude) if lista.latitude else None,
+        'longitude': str(lista.longitude) if lista.longitude else None,
+        'tem_geolocalizacao': lista.tem_geolocalizacao(),
+        # Contadores de prioridade
+        'itens_alta_prioridade': itens_alta,
+        'itens_media_prioridade': itens_media,
+        'itens_baixa_prioridade': itens_baixa,
     }
     
-    return JsonResponse({'lista': lista_dict})
+    return JsonResponse({
+        'status': 'success',
+        'lista': lista_dict
+    })
 
 
 @csrf_exempt
@@ -305,7 +334,7 @@ def criar_lista(request):
 @csrf_exempt
 def atualizar_lista(request, lista_id):
     """
-    Atualiza uma lista existente a partir dos dados enviados via PUT
+    Atualiza uma lista existente a partir dos dados enviados via PUT/POST
     """
     # Verifica se a lista existe e pertence ao usuário atual
     lista = get_object_or_404(Lista, id=lista_id, usuario=request.user)
@@ -315,14 +344,17 @@ def atualizar_lista(request, lista_id):
             # Obtém os dados do corpo da requisição
             dados = json.loads(request.body)
             
+            # Processa e limpa os dados antes de enviar para o form
+            dados_processados = processar_dados_lista(dados)
+            
             # Cria um formulário com os dados recebidos
-            form = ListaForm(dados, instance=lista)
+            form = ListaForm(dados_processados, instance=lista)
             
             if form.is_valid():
                 # Salva as alterações
                 lista = form.save()
                 
-                # Retorna resposta de sucesso
+                # Retorna resposta de sucesso com dados completos
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Lista atualizada com sucesso!',
@@ -335,6 +367,16 @@ def atualizar_lista(request, lista_id):
                         'cor': lista.cor,
                         'icone': lista.icone,
                         'data_objetivo': lista.data_objetivo.strftime('%d/%m/%Y') if lista.data_objetivo else None,
+                        # Novos campos de geolocalização
+                        'endereco': lista.endereco,
+                        'latitude': str(lista.latitude) if lista.latitude else None,
+                        'longitude': str(lista.longitude) if lista.longitude else None,
+                        'tem_geolocalizacao': lista.tem_geolocalizacao(),
+                        # Dados adicionais para atualização da interface
+                        'porcentagem_concluida': lista.porcentagem_concluida(),
+                        'itens_alta_prioridade': lista.itens_alta_prioridade(),
+                        'itens_media_prioridade': lista.itens_media_prioridade(),
+                        'itens_baixa_prioridade': lista.itens_baixa_prioridade(),
                     }
                 })
             else:
@@ -350,12 +392,63 @@ def atualizar_lista(request, lista_id):
                 'status': 'error',
                 'message': 'Dados inválidos. Verifique o formato JSON.'
             }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro interno do servidor: {str(e)}'
+            }, status=500)
     
     # Se não for uma requisição PUT ou POST
     return JsonResponse({
         'status': 'error',
         'message': 'Método não permitido. Use PUT ou POST para atualizar uma lista.'
     }, status=405)
+
+
+def processar_dados_lista(dados):
+    """
+    Processa e limpa os dados recebidos do frontend antes de enviar para o form
+    """
+    dados_processados = dados.copy()
+    
+    # Processar campos de geolocalização
+    latitude = dados.get('latitude')
+    longitude = dados.get('longitude')
+    
+    # Converter strings vazias para None
+    if latitude == '' or latitude == 'null':
+        dados_processados['latitude'] = None
+    elif latitude is not None:
+        try:
+            dados_processados['latitude'] = Decimal(str(latitude))
+        except (InvalidOperation, TypeError, ValueError):
+            dados_processados['latitude'] = None
+    
+    if longitude == '' or longitude == 'null':
+        dados_processados['longitude'] = None
+    elif longitude is not None:
+        try:
+            dados_processados['longitude'] = Decimal(str(longitude))
+        except (InvalidOperation, TypeError, ValueError):
+            dados_processados['longitude'] = None
+    
+    # Processar endereço
+    endereco = dados.get('endereco')
+    if endereco == '' or endereco == 'null':
+        dados_processados['endereco'] = None
+    
+    # Processar objetivo
+    objetivo = dados.get('objetivo')
+    if objetivo == '' or objetivo == 'null':
+        dados_processados['objetivo'] = None
+    
+    # Processar data objetivo
+    data_objetivo = dados.get('data_objetivo')
+    if data_objetivo == '' or data_objetivo == 'null':
+        dados_processados['data_objetivo'] = None
+    
+    return dados_processados
+
 
 
 @csrf_exempt
